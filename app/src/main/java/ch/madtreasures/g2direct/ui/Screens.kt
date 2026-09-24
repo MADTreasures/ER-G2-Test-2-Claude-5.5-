@@ -301,6 +301,7 @@ fun MenuScreen(
     onCenter: () -> Unit,
     onStyle: (CursorLayers.Style) -> Unit,
     onSpeed: (Float) -> Unit,
+    onPipeline: (Int) -> Unit,
     onLog: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
@@ -318,7 +319,7 @@ fun MenuScreen(
                 val battery = state.battery?.let { "Akku $it %" + if (state.charging == true) " ⚡" else "" } ?: "Akku ?"
                 CenterText(
                     "$battery · FW ${state.firmware ?: "?"}\n" +
-                        "Anzeige: ${state.page.label} · Bild: ${state.imageStatus}\n" +
+                        "Anzeige: ${state.page.label} · ${state.screen} · Bild: ${state.imageStatus}\n" +
                         "Updates: ${s.textSent} gesendet, ${s.textAcked} bestätigt, ${s.textTimeouts} ohne Antwort\n" +
                         "Antwortzeit Ø ${s.ackMsAvg} ms · ${String.format(Locale.GERMANY, "%.1f", s.updatesPerSecond)}/s" +
                         (if (s.fixedRateMode) " (Festtakt)" else "") + "\n" +
@@ -352,6 +353,17 @@ fun MenuScreen(
                     Text(String.format(Locale.GERMANY, "Tempo %.1f×", state.speed), fontSize = 13.sp)
                     OutlinedButton(onClick = { onSpeed(state.speed + 0.2f) }) { Text("+") }
                 }
+            }
+            item {
+                // More updates in flight = smoother cursor, as long as the glasses keep up.
+                val choices = SessionState.PIPELINE_CHOICES
+                val next = choices[(choices.indexOf(state.pipeline).coerceAtLeast(0) + 1) % choices.size]
+                FilledTonalButton(
+                    onClick = { onPipeline(next) },
+                    modifier = Modifier.fillMaxWidth(),
+                    secondaryLabel = { Text("mehr = flüssiger · tippen: $next", fontSize = 11.sp) },
+                    label = { Text("Parallel: ${state.pipeline}") },
+                )
             }
             item { OutlinedButton(onClick = onLog, modifier = Modifier.fillMaxWidth()) { Text("Protokoll") } }
             item {

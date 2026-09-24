@@ -20,7 +20,19 @@ object G2Font {
 
     private val OTHER = mapOf(
         0x00A0 to 80, // NO-BREAK SPACE
+        0x00AB to 192, // «
         0x00B7 to 80, // MIDDLE DOT
+        0x00BB to 192, // »
+        0x00C4 to 224, // Ä
+        0x00D6 to 192, // Ö
+        0x00DC to 192, // Ü
+        0x00DF to 176, // ß
+        0x00E4 to 192, // ä
+        0x00F6 to 176, // ö
+        0x00FC to 192, // ü
+        0x2013 to 240, // –
+        0x201C to 128, // “
+        0x201E to 144, // „
         0x3000 to 320, // IDEOGRAPHIC SPACE
         0x2501 to 320, // ━
         0x2503 to 320, // ┃

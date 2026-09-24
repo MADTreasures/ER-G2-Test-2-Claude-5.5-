@@ -47,8 +47,9 @@ import kotlin.math.hypot
 /**
  * The whole watch face is a relative touchpad: only finger *movement* moves the cursor,
  * never the touch position itself, so lifting and putting the finger down elsewhere does
- * not make the cursor jump. There are no zones or buttons on this screen; holding the
- * finger still for a moment opens the menu, the crown changes the pointer speed.
+ * not make the cursor jump. There are no zones or buttons on this screen: a double tap
+ * anywhere is a mouse click at the cursor, holding the finger still for a moment opens the
+ * menu, the crown changes the pointer speed.
  */
 @Composable
 fun TouchpadScreen(
@@ -56,6 +57,7 @@ fun TouchpadScreen(
     onTouchStart: () -> Unit,
     onMove: (dx: Float, dy: Float) -> Unit,
     onSpeed: (Float) -> Unit,
+    onDoubleTap: () -> Unit,
     onOpenMenu: () -> Unit,
 ) {
     val haptics = LocalHapticFeedback.current
@@ -66,6 +68,8 @@ fun TouchpadScreen(
     val touchStart by rememberUpdatedState(onTouchStart)
     val move by rememberUpdatedState(onMove)
     val setSpeed by rememberUpdatedState(onSpeed)
+    val doubleTap by rememberUpdatedState(onDoubleTap)
+    var lastTapAt by remember { mutableLongStateOf(-10_000L) }
     val focusRequester = remember { FocusRequester() }
     var speedShownAt by remember { mutableLongStateOf(0L) }
     var touching by remember { mutableStateOf(false) }
@@ -106,6 +110,15 @@ fun TouchpadScreen(
                         move(ddx * k, ddy * k)
                     },
                     onUp = { touching = false },
+                    onTap = { at ->
+                        if (at - lastTapAt <= DOUBLE_TAP_MS) {
+                            lastTapAt = -10_000L
+                            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                            doubleTap()
+                        } else {
+                            lastTapAt = at
+                        }
+                    },
                     onLongPress = {
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         openMenu()
@@ -154,6 +167,8 @@ fun TouchpadScreen(
                     fontSize = 12.sp, lineHeight = 14.sp, maxLines = 3, overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
                 )
+            } else if (state.pointerInfo != null) {
+                Text(state.pointerInfo, fontSize = 12.sp, color = OkGreen, maxLines = 1)
             } else {
                 state.lastGlassesInput?.let {
                     Text("Brille-Eingabe: $it", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
@@ -164,7 +179,7 @@ fun TouchpadScreen(
             } else if (!showNotice) {
                 // Two short lines: the round display is too narrow this far down for one.
                 Text(
-                    "Wischen = Cursor\nHalten = Menü",
+                    "2× tippen = Klick\nHalten = Menü",
                     fontSize = 11.sp,
                     lineHeight = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -194,14 +209,23 @@ private const val BASE_GAIN = 2.6f
 /** Finger must rest this long (without moving past the touch slop) to open the menu. */
 private const val LONG_PRESS_MS = 900L
 
+/** A touch shorter than this that stays within the touch slop is a tap. */
+private const val TAP_MAX_MS = 300L
+
+/** Two taps at most this far apart (end to end) make a double tap. */
+private const val DOUBLE_TAP_MS = 400L
+
 /**
  * Relative pointer tracking. Only deltas between successive events of the same finger are
  * reported; a new touch (or a second finger taking over) re-anchors without moving.
+ * Movement within the touch slop is held back until the finger clearly moves, so a tap
+ * never nudges the cursor; the held-back part is then sent along and nothing is lost.
  */
 private suspend fun PointerInputScope.relativeTouchpad(
     onDown: () -> Unit,
     onMove: (dx: Float, dy: Float, dtMs: Float) -> Unit,
     onUp: () -> Unit,
+    onTap: (upTimeMs: Long) -> Unit,
     onLongPress: () -> Unit,
 ) {
     val slop = viewConfiguration.touchSlop
@@ -214,6 +238,11 @@ private suspend fun PointerInputScope.relativeTouchpad(
         var lastTime = down.uptimeMillis
         var travelled = 0f
         var longPressed = false
+        var multiFinger = false
+        var heldX = 0f
+        var heldY = 0f
+        var heldMs = 0f
+        var upTime = down.uptimeMillis
         try {
             while (true) {
                 val waitingForLongPress = !longPressed && travelled <= slop
@@ -230,8 +259,13 @@ private suspend fun PointerInputScope.relativeTouchpad(
                 }
                 val change = event.changes.firstOrNull { it.id == tracked }
                 if (change == null || !change.pressed) {
-                    val other = event.changes.firstOrNull { it.pressed } ?: break
+                    val other = event.changes.firstOrNull { it.pressed }
+                    if (other == null) {
+                        upTime = change?.uptimeMillis ?: lastTime
+                        break
+                    }
                     // Another finger is still down: continue with it, re-anchored (no jump).
+                    multiFinger = true
                     tracked = other.id
                     last = other.position
                     lastTime = other.uptimeMillis
@@ -242,14 +276,26 @@ private suspend fun PointerInputScope.relativeTouchpad(
                 val dt = (change.uptimeMillis - lastTime).coerceAtLeast(1L).toFloat()
                 last = change.position
                 lastTime = change.uptimeMillis
-                if (delta.x != 0f || delta.y != 0f) {
+                if ((delta.x != 0f || delta.y != 0f) && !longPressed) {
                     travelled += delta.getDistance()
-                    if (!longPressed) onMove(delta.x, delta.y, dt)
+                    if (travelled <= slop) {
+                        heldX += delta.x
+                        heldY += delta.y
+                        heldMs += dt
+                    } else {
+                        onMove(heldX + delta.x, heldY + delta.y, heldMs + dt)
+                        heldX = 0f
+                        heldY = 0f
+                        heldMs = 0f
+                    }
                 }
                 event.changes.forEach { it.consume() }
             }
         } finally {
             onUp()
+        }
+        if (!longPressed && !multiFinger && travelled <= slop && upTime - down.uptimeMillis <= TAP_MAX_MS) {
+            onTap(upTime)
         }
     }
 }

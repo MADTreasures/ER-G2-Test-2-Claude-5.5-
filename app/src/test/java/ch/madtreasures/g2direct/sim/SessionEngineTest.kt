@@ -81,7 +81,7 @@ class SessionEngineTest {
         assertEquals(listOf(4, 128), leftDev)
         assertEquals(1, r.glasses.messages(Side.RIGHT, ServiceId.ONBOARDING).size)
         assertEquals(1, r.glasses.creates)
-        assertEquals(TestPage.textContainers(288, 144).size, r.glasses.texts.size)
+        assertEquals(TestPage.textContainers(TestPage.Screen.MAIN, 288, 144).size, r.glasses.texts.size)
         assertEquals(77, s.battery)
 
         r.assertCursorShownAtReportedPosition()
@@ -306,5 +306,115 @@ class SessionEngineTest {
         r.engine.onTouchStart()
         step(100)
         assertEquals(2, r.glasses.links.getValue(Side.RIGHT).highPriorityRequests)
+    }
+
+    /** Visible cursor moves on the glasses per second during 2 s of continuous 120 Hz touch input. */
+    private fun TestScope.cursorRate(r: Rig): Float {
+        var moves = 0
+        var shown = r.cursorGlyphs().singleOrNull()?.let { it.x to it.y }
+        repeat(240) {
+            r.engine.moveCursorBy(if (it < 120) 1.5f else -1.5f, 0.5f)
+            step(8)
+            val now = r.cursorGlyphs().singleOrNull()?.let { g -> g.x to g.y }
+            if (now != null && now != shown) {
+                moves++
+                shown = now
+            }
+        }
+        return moves / 2f
+    }
+
+    @Test
+    fun slowAcksDoNotSlowTheCursorDown() = runTest {
+        // The real glasses acknowledged a text update after ~140 ms on average.
+        val r = rig { textAckLatencyMs = 140 }
+        r.engine.connect(request)
+        step(10_000)
+        val rate = cursorRate(r)
+        assertTrue("nur $rate Updates/s", rate >= 15f)
+        println("Takt mit Pipeline: $rate Cursor-Bewegungen/s, max. ${r.glasses.maxTextInFlight} gleichzeitig")
+        // Never more in flight than allowed (+ at most one batch of up to 4 updates).
+        assertTrue("${r.glasses.maxTextInFlight} gleichzeitig", r.glasses.maxTextInFlight <= r.engine.state.value.pipeline + 3)
+        step(1_000)
+        r.assertCursorShownAtReportedPosition()
+        assertEquals(0, r.engine.state.value.stats.textTimeouts)
+        assertTrue(r.engine.state.value.stats.ackMsAvg in 130..200)
+        r.assertNoViolations()
+    }
+
+    @Test
+    fun oneUpdateAtATimeIsWhatMadeTheCursorJerky() = runTest {
+        val r = rig { textAckLatencyMs = 140 }
+        r.engine.setPipeline(1)
+        r.engine.connect(request)
+        step(10_000)
+        val rate = cursorRate(r)
+        assertTrue("$rate Updates/s", rate <= 8f)
+        // One batch at most: new layer, old layer, and the markers of the two fields.
+        assertTrue("${r.glasses.maxTextInFlight} gleichzeitig", r.glasses.maxTextInFlight <= 4)
+        println("Takt ohne Pipeline: $rate Cursor-Bewegungen/s")
+        r.assertNoViolations()
+    }
+
+    private fun Rig.pointAt(button: TestPage.Button) {
+        val (x, y) = engine.target()
+        engine.moveCursorBy(button.x + button.width / 2 - x, button.y + button.height / 2 - y)
+    }
+
+    @Test
+    fun doubleTapOnAFieldOpensItsWindowAndCloseLeadsBack() = runTest {
+        val r = rig { textAckLatencyMs = 140 }
+        r.engine.connect(request)
+        step(15_000)
+        val wedgeTransfers = r.glasses.imagesCompleted
+
+        r.pointAt(TestPage.buttonA)
+        step(1_000)
+        assertTrue(r.glasses.texts.getValue(TestPage.BTN_A_ID).content.contains("» Feld A «"))
+        assertTrue(r.glasses.texts.getValue(TestPage.BTN_B_ID).content.contains("\u00A0 Feld B \u00A0"))
+        assertEquals("Zeiger auf „Feld A“", r.engine.state.value.pointerInfo)
+
+        r.engine.click()
+        step(3_000)
+        assertEquals("Fenster A", r.engine.state.value.screen)
+        assertTrue(r.glasses.texts.getValue(TestPage.WINDOW_ID).content.startsWith("Fenster A"))
+        assertTrue(TestPage.BTN_A_ID !in r.glasses.texts)
+        assertTrue(r.glasses.images.isEmpty())
+        r.assertCursorShownAtReportedPosition()
+
+        r.pointAt(TestPage.closeButton)
+        step(1_000)
+        assertTrue(r.glasses.texts.getValue(TestPage.CLOSE_ID).content.contains("» Schließen «"))
+        r.engine.click()
+        step(5_000)
+        assertEquals("Hauptseite", r.engine.state.value.screen)
+        assertTrue(TestPage.BTN_A_ID in r.glasses.texts && TestPage.WINDOW_ID !in r.glasses.texts)
+        // Back on the main page the grey wedge is sent again.
+        assertTrue(r.glasses.imagesCompleted > wedgeTransfers)
+        r.assertCursorShownAtReportedPosition()
+        r.assertNoViolations()
+    }
+
+    @Test
+    fun clickBesideTheFieldsChangesNothing() = runTest {
+        val r = rig()
+        r.engine.connect(request)
+        step(10_000)
+        val rebuilds = r.glasses.rebuilds
+        r.engine.click() // the cursor starts between the two fields
+        step(2_000)
+        assertEquals(rebuilds, r.glasses.rebuilds)
+        assertEquals("Hauptseite", r.engine.state.value.screen)
+        assertEquals("Klick ins Leere", r.engine.state.value.pointerInfo)
+        r.assertNoViolations()
+    }
+
+    @Test
+    fun windowPagesRespectTheFirmwareLimits() = runTest {
+        for (screen in TestPage.Screen.entries) {
+            val texts = TestPage.textContainers(screen, 288, 144)
+            assertTrue("$screen", texts.size <= 8)
+            assertEquals(1, texts.count { it.eventCapture })
+        }
     }
 }

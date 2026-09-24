@@ -31,6 +31,7 @@ class TouchpadGestureTest {
     private val moves = ArrayList<Offset>()
     private var touches = 0
     private var menuOpened = 0
+    private var doubleTaps = 0
 
     private fun total() = moves.fold(Offset.Zero) { sum, d -> sum + d }
 
@@ -43,6 +44,7 @@ class TouchpadGestureTest {
                     onTouchStart = { touches++ },
                     onMove = { dx, dy -> moves += Offset(dx, dy) },
                     onSpeed = {},
+                    onDoubleTap = { doubleTaps++ },
                     onOpenMenu = { menuOpened++ },
                 )
             }
@@ -118,5 +120,61 @@ class TouchpadGestureTest {
         }
         assertEquals(0, menuOpened)
         assertTrue(total().x > 0f)
+    }
+
+    private val MID = Offset(227f, 227f)
+
+    private fun tap(at: Offset, jitter: Offset = Offset.Zero) {
+        compose.onRoot().performTouchInput {
+            down(at)
+            if (jitter != Offset.Zero) moveBy(jitter)
+            up()
+        }
+    }
+
+    @Test
+    fun doubleTapClicksWithoutMovingTheCursor() {
+        // Real taps wobble a little; that must neither move the cursor nor spoil the click.
+        tap(MID, jitter = Offset(3f, -2f))
+        tap(MID + Offset(20f, 10f), jitter = Offset(-2f, 2f))
+        assertEquals(1, doubleTaps)
+        assertEquals(Offset.Zero, total())
+        assertEquals(0, menuOpened)
+    }
+
+    @Test
+    fun singleTapIsNoClick() {
+        tap(MID)
+        compose.mainClock.advanceTimeBy(1_000)
+        assertEquals(0, doubleTaps)
+    }
+
+    @Test
+    fun twoSlowTapsAreNoDoubleTap() {
+        tap(MID)
+        compose.mainClock.advanceTimeBy(800)
+        tap(MID)
+        assertEquals(0, doubleTaps)
+    }
+
+    @Test
+    fun smallStartOfAStrokeIsNotLost() {
+        // The first few pixels are held back (could be a tap) and sent once the finger moves on.
+        compose.onRoot().performTouchInput {
+            down(center)
+            repeat(10) { moveBy(Offset(4f, 0f)) }
+            up()
+        }
+        assertEquals(0, doubleTaps)
+        val single = total()
+        moves.clear()
+        compose.onRoot().performTouchInput {
+            down(center)
+            moveBy(Offset(40f, 0f))
+            up()
+        }
+        assertTrue("$single", single.x > 0f)
+        // Same 40 px in ten small steps or one step: the cursor travels comparably far.
+        assertTrue("${single.x} vs ${total().x}", single.x > total().x * 0.3f)
     }
 }

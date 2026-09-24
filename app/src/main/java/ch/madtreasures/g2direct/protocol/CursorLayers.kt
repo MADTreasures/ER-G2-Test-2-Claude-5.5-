@@ -14,8 +14,9 @@ import kotlin.math.roundToInt
  * - Horizontal: the firmware skips *leading ASCII spaces* on every line (documented by
  *   Even's own font-metrics library @evenrealities/pretext), so lines are indented with
  *   NO-BREAK SPACE (U+00A0, 5 px advance) instead -> 5 px steps.
- * - Vertical: the LVGL line height is 27 px. [LAYER_OFFSETS] stacks five layers shifted
- *   by ~5.4 px; the cursor lives in exactly one of them -> ~5.4 px steps.
+ * - Vertical: the LVGL line height is 27 px. [LAYER_OFFSETS] stacks four layers shifted
+ *   by ~6.75 px; the cursor lives in exactly one of them -> ~6.75 px steps. (Four, not five:
+ *   the firmware allows eight text containers and the test page needs the rest.)
  * - Every layer always carries the same number of UTF-8 bytes (glyphs are swapped for
  *   IDEOGRAPHIC SPACE U+3000, which has the same 3-byte size and 20 px advance, when a
  *   layer is blank). That makes the update independent of how the firmware interprets
@@ -31,8 +32,8 @@ object CursorLayers {
     const val LINE_HEIGHT = 27
     const val NBSP_WIDTH = 5
 
-    /** y offsets of the five cursor layers (27 / 5 = 5.4 px apart, rounded). */
-    val LAYER_OFFSETS = intArrayOf(0, 5, 11, 16, 22)
+    /** y offsets of the four cursor layers (27 / 4 = 6.75 px apart, rounded). */
+    val LAYER_OFFSETS = intArrayOf(0, 7, 14, 20)
 
     /** Rows a layer can hold without overflowing (an overflowing text container shows a scrollbar). */
     fun rows(layer: Int): Int = (SCREEN_H - LAYER_OFFSETS[layer]) / LINE_HEIGHT

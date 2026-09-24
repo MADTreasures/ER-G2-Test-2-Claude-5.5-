@@ -93,14 +93,14 @@ Auf der Standard-Firmware lassen sich Container nur per REBUILD verschieben. REB
 Die Umsetzung steht in `protocol/CursorLayers.kt`:
 
 - **Horizontal:** Die Firmware verwirft führende ASCII-Leerzeichen einer Zeile. Das steht so in Evens eigener Schriftbibliothek `@evenrealities/pretext`. Eingerückt wird deshalb mit **U+00A0** (5 px) → 5-px-Raster.
-- **Vertikal:** Die Zeilenhöhe beträgt 27 px. Fünf transparente, bildschirmbreite Textcontainer liegen um 0/5/11/16/22 px versetzt übereinander. Der Cursor steht immer in genau einer Ebene → etwa 5,4-px-Raster.
+- **Vertikal:** Die Zeilenhöhe beträgt 27 px. Vier transparente, bildschirmbreite Textcontainer liegen um 0/7/14/20 px versetzt übereinander. Der Cursor steht immer in genau einer Ebene → etwa 6,75-px-Raster. (Anfangs waren es fünf Ebenen; die Firmware erlaubt aber nur acht Textcontainer, und die Felder A/B brauchen Platz.)
 - **Zeichen:** `╋` (20 × 27 px) als Standard. Zur Auswahl stehen außerdem ein großes Fadenkreuz (`┃`/`━╋━`/`┃`) und `◎`.
 - **Konstante Länge:** Jede Ebene enthält immer gleich viele UTF-8-Bytes. Unsichtbare Zellen sind U+3000 (ebenfalls 3 Byte, 20 px), die Zeilen werden mit U+00A0 aufgefüllt. Damit ist gleichgültig, ob die Firmware `contentLength` als „so viele Bytes ersetzen“ (Beobachtung von MentraOS) oder „ganzer Text neu“ (Lesart von faceclaw) auslegt. Die Simulationstests prüfen beide Varianten.
-- **Taktung:** Es ist höchstens ein Update gleichzeitig unterwegs; die App wartet auf die Bestätigung (Cmd 6) oder 300 ms. Dazu kommen mindestens 40 ms Abstand, also höchstens etwa 25 Updates pro Sekunde. Dazwischen anfallende Touch-Bewegungen werden zusammengefasst. Schickt die Brille keine Text-Bestätigungen, schaltet die App auf einen festen Takt von 16 pro Sekunde.
+- **Taktung:** Die echte Brille bestätigt ein Text-Update (Cmd 6) nach durchschnittlich 141 ms (erster Hardware-Test). Auf jede Bestätigung zu warten, ergab nur ~7 Cursor-Bewegungen pro Sekunde, der Cursor ruckelte. Deshalb dürfen jetzt bis zu 4 Updates gleichzeitig unterwegs sein (im Menü 1–8 einstellbar). Bestätigungen kommen in Sendereihenfolge und werden dem ältesten offenen Update zugeordnet; nach 600 ms gilt ein Update als verloren. Dazu kommen mindestens 40 ms Abstand, also höchstens etwa 25 Updates pro Sekunde. Dazwischen anfallende Touch-Bewegungen werden zusammengefasst. Schickt die Brille keine Text-Bestätigungen, schaltet die App auf einen festen Takt von 16 pro Sekunde.
 - **Wechsel der Ebene:** Zuerst wird die neue Ebene gezeichnet, dann die alte geleert.
 
 Einschränkungen dieser Technik:
-- Das Raster ist 5 px (horizontal) bzw. etwa 5,4 px (vertikal) grob.
+- Das Raster ist 5 px (horizontal) bzw. etwa 6,75 px (vertikal) grob.
 - Unter dem Graustufen-Bild ist der Cursor verdeckt.
 - Das große Fadenkreuz erreicht die oberen und unteren etwa 40 px nicht.
 
@@ -108,7 +108,7 @@ Einschränkungen dieser Technik:
 
 ![Simulation](screenshots/brille_simulation_start.png)
 
-Rahmen um die ganze Anzeigefläche, Titel- und Infozeile (Position und Update-Zähler), 80×80-Kasten um den Startpunkt des Cursors, 16-stufiger Graukeil (Bildkanal). *Das Bild ist eine Layout-Simulation aus dem Protokollmodell, keine Aufnahme der Brille.*
+Rahmen um die ganze Anzeigefläche, Titel- und Infozeile (Position und Update-Zähler), die Felder A und B, 16-stufiger Graukeil (Bildkanal). Zeigt der Cursor auf ein Feld, tauscht ein Text-Update die geschützten Leerzeichen um den Namen gegen » « (beide 2 Byte in UTF-8, die Länge bleibt gleich). Ein Klick (Doppeltipp auf der Uhr) baut per REBUILD eine Fensterseite auf: Fensterrahmen mit Text, Feld „Schließen“ und die Cursor-Ebenen; „Schließen“ baut die Hauptseite wieder auf. *Das Bild ist eine Layout-Simulation aus dem Protokollmodell, keine Aufnahme der Brille.*
 
 ## 7. Quellen
 

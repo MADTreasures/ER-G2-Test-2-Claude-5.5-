@@ -57,6 +57,8 @@ class G2Session(context: Context) {
     fun moveCursorBy(dx: Float, dy: Float) = engine.moveCursorBy(dx, dy)
     fun centerCursor() = engine.centerCursor()
     fun onTouchStart() = engine.onTouchStart()
+    fun click() = engine.click()
+    fun setPipeline(n: Int) = engine.setPipeline(n)
 
     private fun target(device: BluetoothDevice): ArmTarget {
         val name = try {

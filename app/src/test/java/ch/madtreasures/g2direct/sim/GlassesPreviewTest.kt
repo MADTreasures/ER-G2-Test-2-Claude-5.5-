@@ -4,6 +4,7 @@ import ch.madtreasures.g2direct.ble.ArmTarget
 import ch.madtreasures.g2direct.ble.ConnectRequest
 import ch.madtreasures.g2direct.ble.SessionEngine
 import ch.madtreasures.g2direct.protocol.G2Font
+import ch.madtreasures.g2direct.protocol.TestPage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -72,6 +73,34 @@ class GlassesPreviewTest {
         '7' to listOf("#####", "....#", "...#.", "..#..", ".#...", ".#...", ".#..."),
         '8' to listOf(".###.", "#...#", "#...#", ".###.", "#...#", "#...#", ".###."),
         '9' to listOf(".###.", "#...#", "#...#", ".####", "....#", "...#.", ".##.."),
+        'A' to listOf(".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"),
+        'B' to listOf("####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."),
+        'F' to listOf("#####", "#....", "#....", "####.", "#....", "#....", "#...."),
+        'K' to listOf("#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"),
+        'S' to listOf(".####", "#....", "#....", ".###.", "....#", "....#", "####."),
+        'Z' to listOf("#####", "....#", "...#.", "..#..", ".#...", "#....", "#####"),
+        'a' to listOf(".....", ".....", ".###.", "....#", ".####", "#...#", ".####"),
+        'f' to listOf("..##.", ".#...", ".#...", "###..", ".#...", ".#...", ".#..."),
+        'g' to listOf(".....", ".####", "#...#", "#...#", ".####", "....#", ".###."),
+        'h' to listOf("#....", "#....", "#.##.", "##..#", "#...#", "#...#", "#...#"),
+        'k' to listOf("#....", "#....", "#..#.", "#.#..", "##...", "#.#..", "#..#."),
+        'm' to listOf(".....", ".....", "##.#.", "#.#.#", "#.#.#", "#.#.#", "#.#.#"),
+        'n' to listOf(".....", ".....", "#.##.", "##..#", "#...#", "#...#", "#...#"),
+        'o' to listOf(".....", ".....", ".###.", "#...#", "#...#", "#...#", ".###."),
+        'p' to listOf(".....", ".....", "####.", "#...#", "####.", "#....", "#...."),
+        'u' to listOf(".....", ".....", "#...#", "#...#", "#...#", "#..##", ".##.#"),
+        'w' to listOf(".....", ".....", "#...#", "#...#", "#.#.#", "#.#.#", ".#.#."),
+        'z' to listOf(".....", ".....", "#####", "...#.", "..#..", ".#...", "#####"),
+        'ä' to listOf(".#.#.", ".....", ".###.", "....#", ".####", "#...#", ".####"),
+        'ö' to listOf(".#.#.", ".....", ".###.", "#...#", "#...#", "#...#", ".###."),
+        'ü' to listOf(".#.#.", ".....", "#...#", "#...#", "#...#", "#..##", ".##.#"),
+        'ß' to listOf(".##..", "#..#.", "#..#.", "#.#..", "#..#.", "#..#.", "#.##."),
+        '»' to listOf(".....", "#.#..", ".#.#.", "..#.#", ".#.#.", "#.#..", "....."),
+        '«' to listOf(".....", "..#.#", ".#.#.", "#.#..", ".#.#.", "..#.#", "....."),
+        '.' to listOf(".....", ".....", ".....", ".....", ".....", ".##..", ".##.."),
+        ',' to listOf(".....", ".....", ".....", ".....", ".##..", "..#..", ".#..."),
+        '„' to listOf(".....", ".....", ".....", ".....", ".#.#.", ".#.#.", "#.#.."),
+        '“' to listOf(".#.#.", "#.#..", "#.#..", ".....", ".....", ".....", "....."),
     )
 
     private fun drawGlyph(f: Frame, ch: Char, x: Int, y: Int) {
@@ -159,9 +188,18 @@ class GlassesPreviewTest {
         engine.connect(ConnectRequest("G2", ArmTarget("R", "Even G2_32_R_1", true), ArmTarget("L", "Even G2_32_L_1", true)))
         advanceTimeBy(10_000); runCurrent()
         writePng(render(glasses), 2, File(dir, "brille_simulation_start.png"))
-        engine.moveCursorBy(-190f, -85f)
+        // Point at "Feld A": the field gets its » « marks.
+        val a = TestPage.buttonA
+        engine.moveCursorBy(a.x + a.width / 2 - engine.target().first, a.y + a.height / 2 - engine.target().second)
         advanceTimeBy(2_000); runCurrent()
         writePng(render(glasses), 2, File(dir, "brille_simulation_bewegt.png"))
+        // Double tap on the watch = click: the window opens.
+        engine.click()
+        advanceTimeBy(3_000); runCurrent()
+        val c = TestPage.closeButton
+        engine.moveCursorBy(c.x + c.width / 2 - engine.target().first, c.y + c.height / 2 - engine.target().second)
+        advanceTimeBy(2_000); runCurrent()
+        writePng(render(glasses), 2, File(dir, "brille_simulation_fenster.png"))
         assertTrue(glasses.violations.toString(), glasses.violations.isEmpty())
     }
 }

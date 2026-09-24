@@ -162,6 +162,7 @@ class MainActivity : ComponentActivity() {
                 onTouchStart = { session.onTouchStart() },
                 onMove = { dx, dy -> session.moveCursorBy(dx, dy) },
                 onSpeed = { session.setSpeed(it) },
+                onDoubleTap = { session.click() },
                 onOpenMenu = { screen = Screen.MENU },
             )
 
@@ -174,6 +175,7 @@ class MainActivity : ComponentActivity() {
                     onCenter = { session.centerCursor(); screen = Screen.TOUCHPAD },
                     onStyle = { session.setStyle(it) },
                     onSpeed = { session.setSpeed(it) },
+                    onPipeline = { session.setPipeline(it) },
                     onLog = { logReturn = Screen.MENU; screen = Screen.LOG },
                     onDisconnect = { session.disconnect(); screen = Screen.DEVICES },
                 )

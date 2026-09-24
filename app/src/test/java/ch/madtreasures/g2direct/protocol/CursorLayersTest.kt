@@ -114,11 +114,11 @@ class CursorLayersTest {
 
     @Test
     fun testPageRespectsFirmwareLimits() {
-        val texts = TestPage.textContainers(288, 144)
+        val texts = TestPage.textContainers(TestPage.Screen.MAIN, 288, 144)
         assertTrue(texts.size <= 8)
         assertEquals(1, texts.count { it.eventCapture })
-        assertTrue(texts.size + TestPage.images.size <= 12)
-        val msg = G2Messages.createPage(1, texts, TestPage.images)
+        assertTrue(texts.size + TestPage.images(TestPage.Screen.MAIN).size <= 12)
+        val msg = G2Messages.createPage(1, texts, TestPage.images(TestPage.Screen.MAIN))
         // Well below the ~4 KB reassembly limit reported for single messages.
         assertTrue(msg.size < 1500)
     }

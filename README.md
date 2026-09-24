@@ -2,7 +2,7 @@
 
 G2 Direct ist eine Test-App für Wear OS. Die Pixel Watch verbindet sich per Bluetooth LE **direkt** mit der Even Realities G2, zeigt ein Testbild auf der Brille und bewegt dort ein Fadenkreuz. Das Uhr-Display dient dabei als relatives Touchpad. Im Betrieb ist **kein Smartphone** beteiligt: Die Uhr rechnet und steuert, die Brille zeigt nur an.
 
-> **Ehrlicher Stand:** Die App ist vollständig implementiert und automatisch getestet, lief aber **noch nie auf einer echten G2 oder Pixel Watch 5**. In der Entwicklungsumgebung gab es weder Brille noch Uhr. Der erste Test mit Hardware passiert also bei dir. Dafür gibt es unten eine [Checkliste](#8-erster-test-auf-echter-hardware).
+> **Stand:** Der erste Test auf echter Hardware (Pixel Watch 5 und G2) hat geklappt: Verbindung zu beiden Bügeln, Testbild, Graukeil und Fadenkreuz erscheinen, der Cursor folgt dem Touchpad. Dabei fiel auf, dass der Cursor ruckelt, weil die Brille jedes Update erst nach ~140 ms bestätigt. **Neu und noch nicht auf Hardware geprüft:** mehrere Updates gleichzeitig (flüssigerer Cursor) sowie Doppeltipp = Klick mit zwei Feldern und einem Fenster.
 
 ---
 
@@ -32,10 +32,10 @@ Pixel Watch (App „G2 Direct“)
  └─ BLE ─► linker Bügel:  Anmeldung, Zeit (optional – ohne ihn läuft die App mit Warnung weiter)
 ```
 
-## 2. Stand: implementiert – getestet – auf Hardware unbestätigt
+## 2. Stand: implementiert – getestet – auf Hardware bestätigt
 
 - **Implementiert** heißt: Der Code ist vorhanden und wird gebaut.
-- **Getestet** heißt: automatisch geprüft, aber **ohne echte Brille und Uhr**. Dazu gehören:
+- **Getestet** heißt: automatisch geprüft, ohne echte Brille und Uhr. Dazu gehören:
   - Unit-Tests
   - eine Simulation gegen ein Modell der Brille (`FakeGlasses`). Es bildet das dokumentierte Firmware-Verhalten nach und meldet jeden Regelverstoß, z. B. EvenHub-Nachrichten an den linken Bügel, zu viele Container, falsche Längen oder ungültige BMP-Dateien.
   - UI-Tests unter Robolectric, die künstliche Touch-Ereignisse durch den echten Gesten-Code der App schicken
@@ -44,34 +44,32 @@ Pixel Watch (App „G2 Direct“)
 
 | Funktion | Implementiert | Getestet (ohne Hardware) | Auf echter Hardware |
 |---|---|---|---|
-| Berechtigung „Geräte in der Nähe“, Bluetooth einschalten | ✅ | Screenshot | unbestätigt |
-| Brille suchen: BLE-Scan **plus** bereits gekoppelte und vom System verbundene Bügel | ✅ | Unit-Tests (Namen, Seriennummer, Gruppierung); Robolectric-Test: gekoppelte und verbundene Bügel bleiben über mehrere Scans gelistet | unbestätigt |
-| Linken und rechten Bügel zu **einer** Brille zusammenfassen, auch wenn ein gekoppelter Bügel nicht sendet | ✅ | Unit-Tests | unbestätigt |
+| Berechtigung „Geräte in der Nähe“, Bluetooth einschalten | ✅ | Screenshot | ✅ bestätigt |
+| Brille suchen: BLE-Scan **plus** bereits gekoppelte und vom System verbundene Bügel | ✅ | Unit-Tests (Namen, Seriennummer, Gruppierung); Robolectric-Test: gekoppelte und verbundene Bügel bleiben über mehrere Scans gelistet | ✅ bestätigt |
+| Linken und rechten Bügel zu **einer** Brille zusammenfassen, auch wenn ein gekoppelter Bügel nicht sendet | ✅ | Unit-Tests | ✅ bestätigt |
 | Zuletzt verwendete Brille ohne neuen Scan verbinden | ✅ | – | unbestätigt |
-| GATT-Verbindung je Bügel: MTU 247, Dienstsuche, Benachrichtigungen, Schreib-Warteschlange | ✅ | nur kompiliert, der Teil braucht echtes Bluetooth | unbestätigt |
-| Rahmenformat, CRC, Zerlegen und Zusammensetzen, Antworten dekodieren | ✅ | 13 Unit-Tests, u. a. CRC-Referenzwert und Antworten, die MentraOS mitgeschnitten hat | unbestätigt |
-| Anmeldung und Start-Sequenz (Reihenfolge und Abstände wie MentraOS) | ✅ | Simulation | unbestätigt |
-| Testbild: Rahmen, Titel- und Infozeile, Kalibrier-Kasten | ✅ | Simulation (Limits, Rückfall von CREATE auf REBUILD) und Layout-Vorschau | unbestätigt |
-| Graukeil als 4-Bit-Bild (Bildkanal) | ✅ | Unit-Tests (BMP-Aufbau) und Simulation | unbestätigt |
-| Fadenkreuz-Cursor über fünf Textebenen | ✅ | Unit-Tests und Simulation mit beiden möglichen Firmware-Lesarten, Mutationsproben | unbestätigt – besonders, ob die Firmware die Einrückung mit U+00A0 darstellt |
-| Relatives Touchpad: kein Sprung beim Neuaufsetzen, gleiche Bewegung ergibt überall gleichen Weg, Halten öffnet das Menü | ✅ | 4 UI-Tests mit künstlichen Touch-Ereignissen, Mutationsprobe | Gefühl und Tempo auf der Uhr unbestätigt |
+| GATT-Verbindung je Bügel: MTU 247, Dienstsuche, Benachrichtigungen, Schreib-Warteschlange | ✅ | nur kompiliert, der Teil braucht echtes Bluetooth | ✅ bestätigt |
+| Rahmenformat, CRC, Zerlegen und Zusammensetzen, Antworten dekodieren | ✅ | 13 Unit-Tests, u. a. CRC-Referenzwert und Antworten, die MentraOS mitgeschnitten hat | ✅ bestätigt |
+| Anmeldung und Start-Sequenz (Reihenfolge und Abstände wie MentraOS) | ✅ | Simulation | ✅ bestätigt |
+| Testbild: Rahmen, Titel- und Infozeile | ✅ | Simulation (Limits, Rückfall von CREATE auf REBUILD) und Layout-Vorschau | ✅ bestätigt |
+| Graukeil als 4-Bit-Bild (Bildkanal) | ✅ | Unit-Tests (BMP-Aufbau) und Simulation | ✅ bestätigt |
+| Fadenkreuz-Cursor über Textebenen (Einrückung mit U+00A0) | ✅ | Unit-Tests und Simulation mit beiden möglichen Firmware-Lesarten, Mutationsproben | ✅ bestätigt (mit fünf Ebenen; jetzt vier, siehe unten) |
+| Relatives Touchpad: kein Sprung beim Neuaufsetzen, gleiche Bewegung ergibt überall gleichen Weg, Halten öffnet das Menü | ✅ | UI-Tests mit künstlichen Touch-Ereignissen, Mutationsprobe | ✅ bestätigt, ruckelte aber (siehe nächste Zeile) |
 | Tempo über die Krone (0,3× bis 4×) | ✅ | – | unbestätigt |
-| Taktung mit Bestätigungen, Rückfall auf Festtakt, wenn keine kommen | ✅ | Simulation | erreichbare Rate unbekannt |
+| Bis zu 4 Updates gleichzeitig unterwegs (einstellbar 1–8), statt auf jede Bestätigung zu warten | ✅ | Simulation mit 140 ms Antwortzeit: 19,5 statt 7 Cursor-Bewegungen/s | **neu, unbestätigt** |
+| Doppeltipp auf der Uhr = Klick: Felder A/B werden unter dem Zeiger mit » « markiert und öffnen ein Fenster, „Schließen“ führt zurück | ✅ | Simulation, UI-Tests (Doppeltipp, Einzeltipp, langsame Tipps) | **neu, unbestätigt** |
+| Rückfall auf Festtakt, wenn keine Bestätigungen kommen | ✅ | Simulation | nicht nötig: die Brille bestätigt (Ø 141 ms gemessen) |
 | Heartbeats, Neuaufbau nach dem Schließen der Seite durch die Brille | ✅ | Simulation | unbestätigt |
 | Neu verbinden (bis zu 3×), Weiterlaufen ohne linken Bügel | ✅ | Simulation | unbestätigt |
-| Status und Fehlermeldungen auf der Uhr | ✅ | Screenshots auf zwei runden Displaygrößen (384 und 454 px) | Lesbarkeit unbestätigt |
+| Status und Fehlermeldungen auf der Uhr | ✅ | Screenshots auf zwei runden Displaygrößen (384 und 454 px) | ✅ Touchpad-Anzeige bestätigt |
 | Protokoll-Ansicht auf der Uhr, `logcat` | ✅ | Screenshot | – |
 
-**Offene Fragen, die nur der Test mit Hardware klärt:**
+**Beim ersten Hardware-Test beantwortet:** Die Brille nimmt die Uhr ohne Smartphone an, die Firmware akzeptiert die Testseite und das Bild, sie bestätigt Text-Updates (Ø 141 ms) und stellt die Einrückung mit U+00A0 dar.
 
-1. Nimmt die Brille die Verbindung der Uhr an, wenn das Smartphone getrennt ist? Erscheint ein Kopplungsdialog?
-2. Bestätigt der rechte Bügel die Anmeldung? Die App läuft auch ohne Bestätigung weiter, meldet das aber.
-3. Nimmt die Firmware die Testseite an?
-4. Bestätigt die Brille Text-Updates? Wenn nicht, schaltet die App auf einen festen Takt von 16 Updates pro Sekunde.
-5. Stellt die Firmware die Einrückung mit geschützten Leerzeichen (U+00A0) dar? Wenn nicht, klebt der Cursor am linken Rand. Das würdest du sofort sehen.
-6. Sitzt das Fadenkreuz beim Start **mittig** im Kasten? Das prüft die Glyphen-Maße.
-7. Zeigen beide Linsen das Bild, auch wenn der linke Bügel nicht verbunden ist?
-8. Welche Update-Rate und Verzögerung schafft die Uhr?
+**Noch offen:**
+1. Wie flüssig läuft der Cursor mit mehreren Updates gleichzeitig? Welche Einstellung unter *Menü → Parallel* passt am besten?
+2. Funktionieren Doppeltipp, Markierung der Felder und das Fenster wie in der Simulation?
+3. Zeigen beide Linsen das Bild, auch wenn der linke Bügel nicht verbunden ist?
 
 ## 3. Vorbereitung
 
@@ -89,8 +87,8 @@ Die App läuft ab Wear OS 3 (API 30). Sie heißt **G2 Direct**, das Paket `ch.ma
 
 | Was | Link |
 |---|---|
-| APK (29 MB, Debug-Build, SDK 37) | [g2direct-0.1.0-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk) |
-| Prüfsumme (SHA-256) | [g2direct-0.1.0-debug.apk.sha256](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/blob/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk.sha256) |
+| APK (29 MB, Debug-Build, SDK 37) | [g2direct-0.2.0-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.0-debug.apk) |
+| Prüfsumme (SHA-256) | [g2direct-0.2.0-debug.apk.sha256](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/blob/claude/zen-newton-15o9rd/release/g2direct-0.2.0-debug.apk.sha256) |
 | `adb` für den Mac, falls nicht über Android Studio installiert | [SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) |
 | Anleitung von Google: Uhr per WLAN verbinden | [Debug Wear OS over Wi-Fi](https://developer.android.com/training/wearables/get-started/debug-wifi) |
 
@@ -104,9 +102,9 @@ Die App läuft ab Wear OS 3 (API 30). Sie heißt **G2 Direct**, das Paket `ch.ma
    Meldet der Mac `command not found: adb`, liegt `adb` im SDK von Android Studio: `export PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"`.
 3. APK laden, prüfen, installieren und starten:
    ```bash
-   curl -L -o g2direct-0.1.0-debug.apk https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk
-   shasum -a 256 g2direct-0.1.0-debug.apk     # muss mit der Prüfsumme oben übereinstimmen
-   adb install -r g2direct-0.1.0-debug.apk    # bei mehreren Geräten: adb -s <IP>:<Port> install -r …
+   curl -L -o g2direct-0.2.0-debug.apk https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.0-debug.apk
+   shasum -a 256 g2direct-0.2.0-debug.apk     # muss mit der Prüfsumme oben übereinstimmen
+   adb install -r g2direct-0.2.0-debug.apk    # bei mehreren Geräten: adb -s <IP>:<Port> install -r …
    adb shell am start -n ch.madtreasures.g2direct/.MainActivity
    ```
 
@@ -155,11 +153,12 @@ Die selbst gebaute APK liegt danach unter `app/build/outputs/apk/debug/app-debug
 | **Brille wählen** | Jede G2 erscheint als **ein** Eintrag mit beiden Bügeln („L ✓ R ✓“), dazu Signalstärke oder „gekoppelt“. Oben steht „zuletzt verwendet“. **Suchen** startet einen neuen Scan von 25 s. |
 | **Status** | Fortschritt je Bügel („verbinde…“, „richte ein…“, „verbunden ✓“), Phase, Anzeige-Status. Fehler stehen rot, Warnungen orange. Während des Aufbaus gibt es **Abbrechen**, nach einem Fehler **Erneut** und **Andere Brille**, immer **Protokoll**. |
 | **Touchpad** | Öffnet sich automatisch, sobald alles bereit ist. |
-| **Menü** | Akku, Firmware und Zähler. Außerdem: *Testbild neu senden*, *Cursor zentrieren*, Cursor-Form (Fadenkreuz / Fadenkreuz groß / Ring), Tempo, *Protokoll*, *Trennen* |
+| **Menü** | Akku, Firmware und Zähler. Außerdem: *Testbild neu senden*, *Cursor zentrieren*, Cursor-Form (Fadenkreuz / Fadenkreuz groß / Ring), Tempo, **Parallel** (wie viele Updates gleichzeitig unterwegs sein dürfen: mehr = flüssiger, solange die Brille mitkommt), *Protokoll*, *Trennen* |
 
 Bedienung des Touchpads:
 - **Finger irgendwo aufsetzen und bewegen:** Der Cursor bewegt sich relativ. Abheben und woanders neu aufsetzen bewegt ihn nicht.
 - **Langsame Bewegung** positioniert fein, **schnelle** Bewegung überquert die Anzeige.
+- **Doppeltipp irgendwo** ist ein Mausklick an der Cursor-Position. Die Uhr vibriert kurz.
 - **Krone drehen** ändert das Tempo.
 - **Finger etwa 1 s ruhig halten** öffnet das Menü, die Uhr vibriert dabei.
 - Es gibt keine Pfeiltasten und keine Zonen. Die Texte auf dem Touchpad sind nur Anzeige:
@@ -167,7 +166,7 @@ Bedienung des Touchpads:
   - Cursor-Position
   - „Anzeige: aktiv/unbestätigt/…“
   - Updates pro Sekunde und durchschnittliche Antwortzeit der Brille
-  - letzte Eingabe an der Brille, z. B. Tippen am Bügel
+  - das Feld unter dem Zeiger bzw. das Ergebnis des letzten Klicks, sonst die letzte Eingabe an der Brille
 
 Weitere Hinweise:
 - **Wischen nach rechts schließt die App nicht.** Sonst würde jede Cursorbewegung nach rechts sie beenden.
@@ -190,12 +189,18 @@ Weitere Hinweise:
 Auf der Brille erscheinen:
 - ein Rahmen um die ganze Anzeigefläche (576 × 288)
 - oben die Titelzeile `G2 Direct · Testbild` mit Cursor-Position und Update-Zähler
-- in der Mitte ein 80 × 80-Kasten, in dem das Fadenkreuz beim Start mittig stehen sollte
+- zwei Felder **Feld A** und **Feld B**
 - unten ein Graukeil mit 16 Stufen
+
+Steht der Zeiger auf einem Feld, wird es mit » « markiert. Ein Doppeltipp auf der Uhr öffnet dann ein Fenster; darin führt das Feld **Schließen** (zeigen und doppeltippen) zurück zur Hauptseite:
+
+| Zeiger auf Feld A | Nach dem Doppeltipp |
+|---|---|
+| ![Zeiger auf Feld A](docs/screenshots/brille_simulation_bewegt.png) | ![Fenster A](docs/screenshots/brille_simulation_fenster.png) |
 
 Das ist normal:
 - Über dem Graukeil verschwindet der Cursor, weil die Firmware Bilder über Text zeichnet.
-- Der Cursor bewegt sich in Schritten von 5 px waagrecht und etwa 5,4 px senkrecht. Die Standard-Firmware kann Text nicht frei positionieren. Warum der Cursor aus Textebenen besteht, steht in [docs/PROTOKOLL.md](docs/PROTOKOLL.md#5-der-cursor--warum-textebenen).
+- Der Cursor bewegt sich in Schritten von 5 px waagrecht und etwa 6,75 px senkrecht. Die Standard-Firmware kann Text nicht frei positionieren. Warum der Cursor aus Textebenen besteht, steht in [docs/PROTOKOLL.md](docs/PROTOKOLL.md#5-der-cursor--warum-textebenen).
 
 ## 7. Fehlersuche
 
@@ -219,23 +224,21 @@ Die App zeigt Fehler auf der Uhr im Klartext. Das Protokoll im Menü bzw. auf de
 | „Verbindung verloren – neuer Versuch n/3“ | Verbindung abgebrochen | die App verbindet bis zu 3× neu |
 | „Zu viele Scans in kurzer Zeit – 30 s warten“ | Grenze von Android (5 Scans in 30 s) | kurz warten |
 
-## 8. Erster Test auf echter Hardware
+## 8. Test auf echter Hardware
 
 Bitte in dieser Reihenfolge vorgehen und die Beobachtungen notieren:
 
-1. App installieren und starten, Berechtigung erlauben.
-2. Erscheint die Brille **als ein Eintrag** mit „L ✓ R ✓“?
-3. Eintrag antippen: Welche Schritte zeigt die Statusseite? Erscheint ein Kopplungsdialog? Gibt es Warnungen?
-4. Erscheint das Testbild? Sind Rahmen, Titelzeile, Kasten und Graukeil zu sehen? Auf beiden Linsen?
-5. Steht das Fadenkreuz beim Start **mittig im Kasten**?
-6. Cursor bewegen:
-   - Folgt er flüssig?
-   - Erreicht er alle Ränder?
-   - Bleibt er beim Neuaufsetzen stehen?
-   - Wie verändert sich das Tempo mit der Krone?
-7. Welche Werte zeigt das Touchpad unter „Anzeige“, z. B. „20/s · Ø 38 ms“? Steht dort „Festtakt“?
-8. Etwa 5 Minuten verbunden lassen: Bleibt die Verbindung stabil?
-9. Menü → *Trennen*: Verschwindet das Testbild?
+1. App installieren und starten, verbinden.
+2. Erscheint das Testbild mit Rahmen, Titelzeile, **Feld A**, **Feld B** und Graukeil? Auf beiden Linsen?
+3. Cursor bewegen:
+   - Läuft er jetzt flüssig? Welche Werte zeigt das Touchpad, z. B. „20/s · Ø 140 ms“?
+   - Unter *Menü → Parallel* andere Werte ausprobieren (1 = alte, ruckelnde Taktung zum Vergleich; 6 oder 8 = mehr gleichzeitig). Welcher Wert fühlt sich am besten an? Steigt die Antwortzeit („Ø … ms“) dabei stark an?
+   - Bleibt er beim Neuaufsetzen stehen? Wie verändert sich das Tempo mit der Krone?
+4. Zeiger auf **Feld A**: Erscheint » Feld A «, und zeigt die Uhr „Zeiger auf „Feld A““?
+5. **Doppeltippen**: Öffnet sich Fenster A? Zeiger auf **Schließen**, doppeltippen: zurück auf der Hauptseite? Dasselbe mit Feld B.
+6. Ein einzelner Tipp darf nichts auslösen und den Cursor nicht verschieben.
+7. Etwa 5 Minuten verbunden lassen: Bleibt die Verbindung stabil?
+8. Menü → *Trennen*: Verschwindet das Testbild?
 
 **Was du mir zurückschicken kannst:**
 - einen Screenshot der Protokoll-Seite

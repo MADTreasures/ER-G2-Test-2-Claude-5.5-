@@ -67,6 +67,9 @@ class FakeGlasses(private val scope: CoroutineScope) {
     val violations = ArrayList<String>()
     val links = HashMap<Side, FakeLink>()
     var textUpdates = 0
+    /** Text updates received but not yet acknowledged, and the highest that count reached. */
+    var textInFlight = 0
+    var maxTextInFlight = 0
     var imagesCompleted = 0
 
     private val rx = HashMap<Side, G2Reassembler>()
@@ -257,6 +260,12 @@ class FakeGlasses(private val scope: CoroutineScope) {
                     textUpdates++
                 }
                 if (sendTextAcks) {
+                    textInFlight++
+                    maxTextInFlight = maxOf(maxTextInFlight, textInFlight)
+                    scope.launch {
+                        delay(textAckLatencyMs)
+                        textInFlight--
+                    }
                     reply(Side.RIGHT, ServiceId.EVEN_HUB, ProtoWriter.build {
                         int(1, 6); int(2, magic); message(10) { int(1, if (ok) 8 else 9) }
                     }, textAckLatencyMs)

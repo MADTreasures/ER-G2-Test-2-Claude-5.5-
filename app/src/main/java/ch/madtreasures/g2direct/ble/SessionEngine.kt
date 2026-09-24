@@ -86,6 +86,13 @@ class SessionEngine(
     private var rightAuth = CompletableDeferred<Boolean>()
 
     private var lastPlacement: CursorLayers.Placement? = null
+    private var screen = TestPage.Screen.MAIN
+    /** Field currently marked as pointed at on the glasses. */
+    private var pointedButton: Int? = null
+    /** Send times of text updates the glasses have not acknowledged yet, oldest first. */
+    private val pendingTexts = ArrayDeque<Long>()
+    @Volatile
+    private var pipeline = SessionState.DEFAULT_PIPELINE
     private var forceRedraw = true
     private var infoDirty = true
     private var lastInfoAt = 0L
@@ -152,6 +159,20 @@ class SessionEngine(
             // A layer's byte length depends on the style, so the page is rebuilt with empty layers.
             rebuildNow()
         }
+    }
+
+    /** How many text updates may be in flight before waiting for the glasses (menu setting). */
+    fun setPipeline(n: Int) {
+        pipeline = n.coerceIn(1, 8)
+        _state.update { it.copy(pipeline = pipeline) }
+    }
+
+    /**
+     * Mouse click at the cursor (double tap on the watch): a field under the cursor opens its
+     * page. Returns immediately; the result shows up in [SessionState.pointerInfo].
+     */
+    fun click() {
+        scope.launch { handleClick() }
     }
 
     fun setSpeed(speed: Float) {
@@ -228,6 +249,7 @@ class SessionEngine(
                 notice = if (attempt == 0) null else it.notice,
             )
         }
+        screen = TestPage.Screen.MAIN
         sessionJob = scope.launch {
             try {
                 runSession(req)
@@ -372,12 +394,17 @@ class SessionEngine(
         imagesJob?.cancel()
         _state.update { it.copy(page = PageState.CREATING) }
         drain(pageAcks)
+        // Updates still in flight belong to the old page; their acks no longer matter.
+        pendingTexts.clear()
+        drain(textAcks)
         lastPlacement = null
+        pointedButton = null
         forceRedraw = true
         infoDirty = true
+        _state.update { it.copy(screen = screen.label) }
         val (cx, cy) = target()
-        val texts = TestPage.textContainers(cx.toInt(), cy.toInt())
-        val images = TestPage.images
+        val texts = TestPage.textContainers(screen, cx.toInt(), cy.toInt())
+        val images = TestPage.images(screen)
 
         if (!preferRebuild) {
             send(Side.RIGHT, ServiceId.EVEN_HUB, G2Messages.createPage(nextMagic(), texts, images))
@@ -424,11 +451,16 @@ class SessionEngine(
     }
 
     private suspend fun sendImages() {
+        val images = TestPage.images(screen)
+        if (images.isEmpty()) {
+            _state.update { it.copy(imageStatus = "–") }
+            return
+        }
         _state.update { it.copy(imageStatus = "warte…") }
         // ffs-os/gateway: the firmware needs ~700 ms after a create/rebuild before it accepts pixels.
         delay(IMAGE_SETTLE_MS)
         var ok = 0
-        for (image in TestPage.images) {
+        for (image in images) {
             val bmp = TestPage.imageBitmap(image).toBmp()
             _state.update { it.copy(imageStatus = "sende ${image.name} (${bmp.size} B)…") }
             // g2-kit: the first image stream after a page create can be dropped although it is
@@ -437,7 +469,7 @@ class SessionEngine(
             val second = sendImage(image, bmp)
             if (first || second) ok++
         }
-        val n = TestPage.images.size
+        val n = images.size
         _state.update { it.copy(imageStatus = if (ok == n) "$ok/$n bestätigt" else "fehlgeschlagen ($ok/$n)") }
         if (ok < n) notice(Severity.WARN, "Bildübertragung nicht bestätigt – Text/Cursor laufen trotzdem")
     }
@@ -497,51 +529,45 @@ class SessionEngine(
         }
     }
 
+    /**
+     * Streams cursor updates. Several updates may be in flight at once ([pipeline]): the
+     * glasses take ~140 ms to acknowledge one, so waiting for each ack would cap the cursor
+     * at ~7 updates/s. Pacing still keeps at least [MIN_UPDATE_GAP_MS] between updates.
+     */
     private suspend fun cursorLoop() {
         var lastUpdateAt = -100_000L
         while (rightReady()) {
             cursorSignal.receive()
-            val page = _state.value.page
-            if (page != PageState.ACTIVE && page != PageState.UNCONFIRMED) continue
+            if (!pageShowing()) continue
 
             // At most ~25 updates/s, or a fixed 16/s when the firmware never acknowledges text.
             val minGap = if (fixedRateMode) FIXED_RATE_GAP_MS else MIN_UPDATE_GAP_MS
             val sinceLast = env.elapsedMs() - lastUpdateAt
             if (sinceLast < minGap) delay(minGap - sinceLast)
+            waitForTextSlot()
+            // The page may have been rebuilt while waiting, so decide what to send only now.
+            if (!pageShowing() || !rightReady()) continue
 
-            val (x, y) = target()
-            val s = style
-            val placement = CursorLayers.place(s, x, y)
-            val previous = lastPlacement
-            if (placement != previous || forceRedraw) {
-                forceRedraw = false
-                val updates = ArrayList<Pair<Int, String>>(2)
-                // New position first, then blank the old layer: a moment with two cursors
-                // reads better than a moment with none.
-                updates += placement.layer to CursorLayers.content(s, placement.layer, placement)
-                if (previous != null && previous.layer != placement.layer) {
-                    updates += previous.layer to CursorLayers.content(s, previous.layer, null)
-                }
-                lastPlacement = placement
-                drain(textAcks)
-                // The pacing gap counts from the send, so the rate is max(1 / gap, 1 / ack latency).
+            val updates = cursorUpdates()
+            if (updates.isNotEmpty()) {
                 lastUpdateAt = env.elapsedMs()
-                for ((layer, content) in updates) sendText(TestPage.layerId(layer), TestPage.layerName(layer), content)
-                awaitTextAcks(updates.size)
-                noteUpdate(env.elapsedMs())
-                infoDirty = true
-                _state.update { it.copy(cursorX = placement.x, cursorY = placement.y) }
+                for (u in updates) sendText(u.id, u.name, u.content)
+                noteUpdate(lastUpdateAt)
+                infoDirty = screen == TestPage.Screen.MAIN
+                val p = lastPlacement
+                if (p != null) _state.update { it.copy(cursorX = p.x, cursorY = p.y) }
+                // Input that arrived while sending is picked up by the next round.
+                cursorSignal.trySend(Unit)
+                continue
             }
 
-            if (infoDirty) {
+            if (infoDirty && screen == TestPage.Screen.MAIN) {
                 val now = env.elapsedMs()
                 if (now - lastInfoAt >= INFO_INTERVAL_MS) {
                     infoDirty = false
                     lastInfoAt = now
                     val p = lastPlacement
-                    drain(textAcks)
                     sendText(TestPage.FRAME_ID, TestPage.FRAME_NAME, TestPage.frameText(p?.x ?: 288, p?.y ?: 144, ++infoCounter))
-                    awaitTextAcks(1)
                 } else {
                     val wait = INFO_INTERVAL_MS - (now - lastInfoAt)
                     scope.launch {
@@ -551,6 +577,66 @@ class SessionEngine(
                 }
             }
         }
+    }
+
+    private class TextUpdate(val id: Int, val name: String, val content: String)
+
+    private fun pageShowing(): Boolean {
+        val page = _state.value.page
+        return page == PageState.ACTIVE || page == PageState.UNCONFIRMED
+    }
+
+    /** Text updates that bring the glasses in line with the cursor target (may be empty). */
+    private fun cursorUpdates(): List<TextUpdate> {
+        val (x, y) = target()
+        val s = style
+        val placement = CursorLayers.place(s, x, y)
+        val previous = lastPlacement
+        val updates = ArrayList<TextUpdate>(4)
+        if (placement != previous || forceRedraw) {
+            forceRedraw = false
+            // New position first, then blank the old layer: a moment with two cursors reads
+            // better than a moment with none.
+            updates += TextUpdate(TestPage.layerId(placement.layer), TestPage.layerName(placement.layer), CursorLayers.content(s, placement.layer, placement))
+            if (previous != null && previous.layer != placement.layer) {
+                updates += TextUpdate(TestPage.layerId(previous.layer), TestPage.layerName(previous.layer), CursorLayers.content(s, previous.layer, null))
+            }
+            lastPlacement = placement
+        }
+        // Mark the field under the cursor.
+        val buttons = TestPage.buttons(screen)
+        val pointed = buttons.firstOrNull { it.contains(placement.x, placement.y) }
+        if (pointed?.id != pointedButton) {
+            buttons.firstOrNull { it.id == pointedButton }?.let {
+                updates += TextUpdate(it.id, it.name, TestPage.buttonText(it, pointed = false))
+            }
+            if (pointed != null) updates += TextUpdate(pointed.id, pointed.name, TestPage.buttonText(pointed, pointed = true))
+            pointedButton = pointed?.id
+            _state.update { it.copy(pointerInfo = pointed?.let { b -> "Zeiger auf „${b.label}“" }) }
+        }
+        return updates
+    }
+
+    private suspend fun handleClick() {
+        val page = _state.value.page
+        if (_state.value.phase != SessionPhase.READY) return
+        if (page == PageState.LOST || page == PageState.HIDDEN) {
+            rebuildNow()
+            return
+        }
+        if (!pageShowing()) return
+        val (x, y) = target()
+        val p = CursorLayers.place(style, x, y)
+        val button = TestPage.buttons(screen).firstOrNull { it.contains(p.x, p.y) }
+        if (button == null) {
+            log("Klick bei X${p.x} Y${p.y}: kein Feld")
+            _state.update { it.copy(pointerInfo = "Klick ins Leere") }
+            return
+        }
+        log("Klick auf „${button.label}“ → ${button.opens.label}")
+        screen = button.opens
+        _state.update { it.copy(pointerInfo = "Klick: ${button.opens.label}") }
+        if (buildPage(preferRebuild = true)) startImages()
     }
 
     private fun rightReady(): Boolean = links[Side.RIGHT]?.state == LinkState.READY
@@ -584,39 +670,48 @@ class SessionEngine(
         val len = content.toByteArray(Charsets.UTF_8).size
         if (send(Side.RIGHT, ServiceId.EVEN_HUB, G2Messages.updateText(nextMagic(), containerId, name, content, len))) {
             textSent++
+            if (!fixedRateMode) pendingTexts.addLast(env.elapsedMs())
         }
     }
 
-    private suspend fun awaitTextAcks(count: Int) {
-        val sentAt = env.elapsedMs()
-        repeat(count) {
-            val timeout = if (fixedRateMode) 1L else TEXT_ACK_TIMEOUT_MS
-            val remaining = timeout - (env.elapsedMs() - sentAt)
-            val ack = if (remaining > 0) {
-                withTimeoutOrNull(remaining) { textAcks.receive() }
-            } else {
-                textAcks.tryReceive().getOrNull()
+    /** Waits until fewer than [pipeline] text updates are unacknowledged. */
+    private suspend fun waitForTextSlot() {
+        while (true) {
+            settleTextAcks()
+            if (fixedRateMode || pendingTexts.size < pipeline) return
+            val wait = (pendingTexts.first() + TEXT_ACK_TIMEOUT_MS - env.elapsedMs()).coerceAtLeast(1L)
+            withTimeoutOrNull(wait) { textAcks.receive() }?.let { onTextAck(it) }
+        }
+    }
+
+    /** Takes in the acks that arrived and gives up on updates older than the timeout. */
+    private fun settleTextAcks() {
+        while (true) onTextAck(textAcks.tryReceive().getOrNull() ?: break)
+        val now = env.elapsedMs()
+        while (pendingTexts.isNotEmpty() && now - pendingTexts.first() > TEXT_ACK_TIMEOUT_MS) {
+            pendingTexts.removeFirst()
+            if (fixedRateMode) continue
+            textTimeouts++
+            consecutiveTimeouts++
+            if (consecutiveTimeouts >= 4 && textAcksReceived == 0) {
+                fixedRateMode = true
+                pendingTexts.clear()
+                notice(Severity.WARN, "Brille bestätigt Text-Updates nicht – Festtakt 16/s")
             }
-            if (ack == null) {
-                if (!fixedRateMode) {
-                    textTimeouts++
-                    consecutiveTimeouts++
-                    if (consecutiveTimeouts >= 4 && textAcksReceived == 0) {
-                        fixedRateMode = true
-                        notice(Severity.WARN, "Brille bestätigt Text-Updates nicht – Festtakt 16/s")
-                    }
-                }
-                return
-            }
-            consecutiveTimeouts = 0
-            val (code, at) = ack
-            textAcked++
-            val ms = (at - sentAt).coerceAtLeast(0)
-            ackMsAvg = if (ackMsAvg == 0.0) ms.toDouble() else ackMsAvg * 0.85 + ms * 0.15
-            if (code != null && code != EvenHubResult.TEXT_SUCCESS) {
-                textRejected++
-                if (code == EvenHubResult.TEXT_FAILED) pageLost("Brille lehnt Text-Update ab (Seite nicht aktiv)")
-            }
+        }
+    }
+
+    /** Acks come back in send order, so each one belongs to the oldest pending update. */
+    private fun onTextAck(ack: Pair<Int?, Long>) {
+        val sentAt = pendingTexts.removeFirstOrNull() ?: return // late ack of an update given up on
+        val (code, at) = ack
+        consecutiveTimeouts = 0
+        textAcked++
+        val ms = (at - sentAt).coerceAtLeast(0)
+        ackMsAvg = if (ackMsAvg == 0.0) ms.toDouble() else ackMsAvg * 0.85 + ms * 0.15
+        if (code != null && code != EvenHubResult.TEXT_SUCCESS) {
+            textRejected++
+            if (code == EvenHubResult.TEXT_FAILED) pageLost("Brille lehnt Text-Update ab (Seite nicht aktiv)")
         }
     }
 
@@ -835,6 +930,8 @@ class SessionEngine(
         pageAcks = Channel(Channel.UNLIMITED)
         imageAcks = Channel(Channel.UNLIMITED)
         lastPlacement = null
+        pointedButton = null
+        pendingTexts.clear()
         forceRedraw = true
     }
 
@@ -912,7 +1009,8 @@ class SessionEngine(
         const val IMAGE_SETTLE_MS = 1_000L
         const val IMAGE_ACK_TIMEOUT_MS = 2_500L
         const val IMAGE_FRAGMENT = 3_800
-        const val TEXT_ACK_TIMEOUT_MS = 300L
+        /** An update not acknowledged within this time counts as lost (the glasses need ~140 ms). */
+        const val TEXT_ACK_TIMEOUT_MS = 600L
         const val MIN_UPDATE_GAP_MS = 40L
         const val FIXED_RATE_GAP_MS = 62L
         const val INFO_INTERVAL_MS = 500L

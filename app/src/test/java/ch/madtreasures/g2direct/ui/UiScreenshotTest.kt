@@ -152,7 +152,7 @@ class UiScreenshotTest {
 
     @Composable
     private fun Touchpad(state: SessionState) =
-        TouchpadScreen(state = state, onTouchStart = {}, onMove = { _, _ -> }, onSpeed = {}, onOpenMenu = {})
+        TouchpadScreen(state = state, onTouchStart = {}, onMove = { _, _ -> }, onSpeed = {}, onDoubleTap = {}, onOpenMenu = {})
 
     private val lostPageState = readyState.copy(
         page = PageState.LOST,
@@ -178,7 +178,7 @@ class UiScreenshotTest {
     fun menu() = shoot("07_menue") {
         MenuScreen(
             state = readyState, onBack = {}, onRebuild = {}, onCenter = {}, onStyle = {}, onSpeed = {},
-            onLog = {}, onDisconnect = {},
+            onPipeline = {}, onLog = {}, onDisconnect = {},
         )
     }
 

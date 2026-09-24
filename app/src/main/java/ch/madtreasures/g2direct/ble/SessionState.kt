@@ -77,6 +77,17 @@ data class SessionState(
     val notice: Notice? = null,
     val lastGlassesInput: String? = null,
     val reconnectAttempt: Int = 0,
+    /** Which test page the glasses show (main page or one of the windows). */
+    val screen: String = "Hauptseite",
+    /** Field under the cursor or the result of the last click, for the watch display. */
+    val pointerInfo: String? = null,
+    /** Text updates allowed in flight at once (menu setting). */
+    val pipeline: Int = DEFAULT_PIPELINE,
 ) {
+    companion object {
+        const val DEFAULT_PIPELINE = 4
+        val PIPELINE_CHOICES = listOf(1, 2, 3, 4, 6, 8)
+    }
+
     val connected: Boolean get() = phase == SessionPhase.READY
 }
