@@ -1,18 +1,17 @@
 [versions]
-# AGP 8.13 + compileSdk 36 keeps the project openable in Android Studio releases
-# from late 2025 onwards. Newer AndroidX releases (core 1.19, Compose 1.12,
-# Wear Compose 1.7) require compileSdk 37 + AGP 9.1 and are deliberately not used.
-agp = "8.13.2"
-kotlin = "2.3.21"
-coreKtx = "1.18.0"
-activityCompose = "1.12.4"
-lifecycle = "2.10.0"
-wearCompose = "1.6.2"
-coroutines = "1.10.2"
+# Current stable releases (as of September 2026). AGP 9 builds Kotlin itself, so there is no
+# separate Kotlin Android plugin; Gradle 9.7 also runs on JDK 25.
+agp = "9.4.1"
+kotlin = "2.4.20"
+coreKtx = "1.19.1"
+activityCompose = "1.13.0"
+lifecycle = "2.11.0"
+wearCompose = "1.7.0"
+coroutines = "1.11.0"
 junit = "4.13.2"
 # UI tests under Robolectric: touchpad gestures and the opt-in screenshots (-Pscreenshots).
 robolectric = "4.17"
-composeUiTest = "1.9.2"
+composeUiTest = "1.12.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -30,5 +29,4 @@ compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-mani
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

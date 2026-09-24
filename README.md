@@ -89,7 +89,7 @@ Die App läuft ab Wear OS 3 (API 30). Sie heißt **G2 Direct**, das Paket `ch.ma
 
 | Was | Link |
 |---|---|
-| APK (26 MB, Debug-Build aus Commit `f629bfc`) | [g2direct-0.1.0-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk) |
+| APK (29 MB, Debug-Build, SDK 37) | [g2direct-0.1.0-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk) |
 | Prüfsumme (SHA-256) | [g2direct-0.1.0-debug.apk.sha256](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/blob/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk.sha256) |
 | `adb` für den Mac, falls nicht über Android Studio installiert | [SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) |
 | Anleitung von Google: Uhr per WLAN verbinden | [Debug Wear OS over Wi-Fi](https://developer.android.com/training/wearables/get-started/debug-wifi) |
@@ -122,8 +122,8 @@ Die APK ist mit einem Debug-Schlüssel signiert. Wechselst du später zu einer s
 | Git-URL zum Klonen | `https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-.git` |
 
 Voraussetzungen:
-- Android Studio mit Android SDK Platform 36
-- JDK 17 oder neuer (das in Android Studio enthaltene JBR genügt)
+- aktuelles Android Studio mit Android SDK Platform 37
+- Java 17 bis 25 für Gradle (das in Android Studio enthaltene JBR genügt, Java 25 geht auch)
 
 1. Projekt holen: entweder die ZIP-Datei entpacken oder klonen:
    ```bash
@@ -131,12 +131,13 @@ Voraussetzungen:
    cd ER-G2-Test-2-Claude-5.5-
    git checkout claude/zen-newton-15o9rd
    ```
-2. In Android Studio *File → Open* wählen und den Ordner öffnen. Den Gradle-Sync abwarten. Fehlt die SDK Platform 36, bietet Android Studio die Installation an.
+2. In Android Studio *File → Open* wählen und den Ordner öffnen. Den Gradle-Sync abwarten. Fehlt die SDK Platform 37, bietet Android Studio die Installation an.
 3. Die Uhr wie unter A) per `adb connect` verbinden. Dann oben die Uhr als Gerät und die Konfiguration **app** wählen und ▶ *Run* drücken.
 
 ### C) Kommandozeile
 
 ```bash
+# optional, falls kein Java 17–25 als Standard eingestellt ist:
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 chmod +x gradlew                 # nur nötig, wenn das Projekt als ZIP geladen wurde
 adb devices                      # die Uhr muss als "device" erscheinen
@@ -271,11 +272,11 @@ Technik:
 
 | Bereich | Version |
 |---|---|
-| Build | AGP 8.13.2, Gradle 8.14.3 |
-| Sprache und UI | Kotlin 2.3.21, Compose for Wear OS (Material 3) 1.6.2 |
-| SDK | compileSdk und targetSdk 36, minSdk 30 |
+| Build | AGP 9.4.1, Gradle 9.7.1 |
+| Sprache und UI | Kotlin 2.4.20, Compose for Wear OS (Material 3) 1.7.0 |
+| SDK | compileSdk und targetSdk 37, minSdk 30 |
 
-`libs.versions.toml` erklärt, warum nicht die allerneuesten AndroidX-Versionen verwendet werden.
+Alle Versionen stehen in `gradle/libs.versions.toml` (Stand September 2026 jeweils die aktuelle stabile Version). Gebaut und getestet mit Java 21 und Java 25.
 
 ## 10. Grenzen und Hinweise
 

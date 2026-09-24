@@ -2,20 +2,19 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "ch.madtreasures.g2direct"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "ch.madtreasures.g2direct"
         // Wear OS 3 (API 30) and newer. The Pixel Watch 5 runs a much newer release;
         // the older API paths are kept only for the legacy BLE permission model.
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
     }
