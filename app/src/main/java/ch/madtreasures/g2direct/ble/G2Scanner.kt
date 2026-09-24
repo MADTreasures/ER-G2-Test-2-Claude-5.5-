@@ -84,6 +84,10 @@ class G2Scanner(context: Context) {
             _error.value = "Bluetooth ist ausgeschaltet"
             return
         }
+        // Forget old advertisements, then re-read the known devices (bonded or connected by the
+        // system): they may not advertise at all and stay listed without signal strength.
+        found.entries.removeAll { !it.value.bonded }
+        found.replaceAll { _, arm -> arm.copy(advertising = false, rssi = null) }
         refreshKnownDevices()
         val scanner = adapter.bluetoothLeScanner
         if (scanner == null) {
@@ -91,9 +95,6 @@ class G2Scanner(context: Context) {
             return
         }
         if (_scanning.value) stopInternal(scanner)
-        // Drop stale advertisements, keep bonded entries.
-        found.entries.removeAll { !it.value.bonded }
-        publish()
         try {
             val settings = ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)

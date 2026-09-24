@@ -387,7 +387,7 @@ object GattStatus {
     fun describe(status: Int): String = when (status) {
         0 -> "OK"
         5 -> "5 (Authentifizierung nötig – Kopplung prüfen)"
-        8 -> "8 (Verbindungs-Timeout, Brille ausser Reichweite?)"
+        8 -> "8 (Verbindungs-Timeout, Brille außer Reichweite?)"
         15 -> "15 (Verschlüsselung nötig – Kopplung prüfen)"
         19 -> "19 (von der Brille getrennt)"
         22 -> "22 (von der Uhr getrennt)"

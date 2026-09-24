@@ -30,7 +30,6 @@ import androidx.wear.compose.material3.Text
 import ch.madtreasures.g2direct.G2App
 import ch.madtreasures.g2direct.ble.ArmPhase
 import ch.madtreasures.g2direct.ble.ArmUi
-import ch.madtreasures.g2direct.ble.G2Arm
 import ch.madtreasures.g2direct.ble.G2Pair
 import ch.madtreasures.g2direct.ble.Notice
 import ch.madtreasures.g2direct.ble.SessionPhase
@@ -180,17 +179,13 @@ fun DevicesScreen(
 
 @Composable
 private fun PairButton(pair: G2Pair, onConnect: (G2Pair) -> Unit) {
-    fun armText(a: G2Arm?, side: String): String {
-        if (a == null) return "$side –"
-        val parts = ArrayList<String>()
-        parts += "$side ✓"
-        if (a.rssi != null && a.advertising) parts += "${a.rssi} dBm"
-        if (a.bonded) parts += "gekoppelt"
-        return parts.joinToString(" ")
-    }
+    val arms = (if (pair.left != null) "L ✓ " else "L – ") + (if (pair.right != null) "R ✓" else "R –")
+    val right = pair.right
     val secondary = when {
-        pair.right == null -> "rechter Bügel fehlt – er trägt die Anzeige"
-        else -> armText(pair.left, "L") + " · " + armText(pair.right, "R")
+        right == null -> "rechter Bügel fehlt – er trägt die Anzeige"
+        right.advertising && right.rssi != null -> "$arms · ${right.rssi} dBm"
+        right.bonded -> "$arms · gekoppelt"
+        else -> arms
     }
     FilledTonalButton(
         onClick = { onConnect(pair) },
@@ -249,7 +244,7 @@ fun StatusScreen(
             }
             if (state.notice != null) item { NoticeText(state.notice) }
             armItems(state)
-            item { CenterText("Seite: ${state.page.label} · Bild: ${state.imageStatus}", size = 12) }
+            item { CenterText("Anzeige: ${state.page.label} · Bild: ${state.imageStatus}", size = 12) }
             if (state.phase == SessionPhase.FAILED) {
                 item {
                     CenterText(
@@ -283,7 +278,7 @@ private fun ArmLine(arm: ArmUi) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
         Text(
             "${if (arm.side == ch.madtreasures.g2direct.ble.Side.RIGHT) "Rechts" else "Links"}: ${arm.phase.label}" +
-                (if (arm.authenticated) " · angemeldet" else ""),
+                (if (arm.authenticated) " ✓" else ""),
             color = color, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
         )
@@ -323,7 +318,7 @@ fun MenuScreen(
                 val battery = state.battery?.let { "Akku $it %" + if (state.charging == true) " ⚡" else "" } ?: "Akku ?"
                 CenterText(
                     "$battery · FW ${state.firmware ?: "?"}\n" +
-                        "Seite: ${state.page.label} · Bild: ${state.imageStatus}\n" +
+                        "Anzeige: ${state.page.label} · Bild: ${state.imageStatus}\n" +
                         "Updates: ${s.textSent} gesendet, ${s.textAcked} bestätigt, ${s.textTimeouts} ohne Antwort\n" +
                         "Antwortzeit Ø ${s.ackMsAvg} ms · ${String.format(Locale.GERMANY, "%.1f", s.updatesPerSecond)}/s" +
                         (if (s.fixedRateMode) " (Festtakt)" else "") + "\n" +

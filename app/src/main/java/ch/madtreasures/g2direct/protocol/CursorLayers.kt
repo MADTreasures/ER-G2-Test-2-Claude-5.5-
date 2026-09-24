@@ -55,15 +55,17 @@ object CursorLayers {
         val hotX: Int,
         val hotY: Int,
     ) {
-        CROSSHAIR_LARGE(
-            "Fadenkreuz gross",
-            listOf(BlockLine(4, "┃"), BlockLine(0, "━╋━"), BlockLine(4, "┃")),
-            hotX = 30, hotY = LINE_HEIGHT + LINE_HEIGHT / 2,
-        ),
+        /** Default: one heavy cross glyph (20 x 27 px), reaches almost the whole display. */
         CROSSHAIR(
             "Fadenkreuz",
             listOf(BlockLine(0, "╋")),
             hotX = 10, hotY = LINE_HEIGHT / 2,
+        ),
+        /** 60 x 81 px; its centre cannot come closer than ~40 px to the top/bottom edge. */
+        CROSSHAIR_LARGE(
+            "Fadenkreuz groß",
+            listOf(BlockLine(4, "┃"), BlockLine(0, "━╋━"), BlockLine(4, "┃")),
+            hotX = 30, hotY = LINE_HEIGHT + LINE_HEIGHT / 2,
         ),
         RING(
             "Ring",

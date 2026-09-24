@@ -31,13 +31,14 @@ enum class SessionPhase(val label: String) {
     FAILED("fehlgeschlagen"),
 }
 
+/** State of our test page on the glasses (shown as "Anzeige: <label>"). */
 enum class PageState(val label: String) {
-    NONE("keine Seite"),
+    NONE("keine"),
     CREATING("wird aufgebaut"),
-    ACTIVE("angezeigt"),
-    UNCONFIRMED("gesendet, unbestätigt"),
+    ACTIVE("aktiv"),
+    UNCONFIRMED("unbestätigt"),
     HIDDEN("im Hintergrund"),
-    LOST("von der Brille geschlossen"),
+    LOST("geschlossen"),
 }
 
 enum class Severity { INFO, WARN, ERROR }
@@ -70,7 +71,7 @@ data class SessionState(
     val firmware: String? = null,
     val cursorX: Int = 288,
     val cursorY: Int = 144,
-    val style: CursorLayers.Style = CursorLayers.Style.CROSSHAIR_LARGE,
+    val style: CursorLayers.Style = CursorLayers.Style.CROSSHAIR,
     val speed: Float = 1.0f,
     val stats: Stats = Stats(),
     val notice: Notice? = null,

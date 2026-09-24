@@ -82,7 +82,8 @@ class MainActivity : ComponentActivity() {
         // Follow the session: open the touchpad once ready, fall back to the status page on trouble.
         LaunchedEffect(state.phase) {
             when (state.phase) {
-                SessionPhase.READY -> if (screen == Screen.STATUS) screen = Screen.TOUCHPAD
+                // Also when the app is reopened while a session is still running.
+                SessionPhase.READY -> if (screen == Screen.STATUS || screen == Screen.DEVICES) screen = Screen.TOUCHPAD
                 SessionPhase.CONNECTING, SessionPhase.INITIALIZING, SessionPhase.CREATING_PAGE,
                 SessionPhase.RECONNECTING, SessionPhase.FAILED ->
                     if (screen == Screen.TOUCHPAD || screen == Screen.MENU || screen == Screen.DEVICES) screen = Screen.STATUS
@@ -158,7 +159,9 @@ class MainActivity : ComponentActivity() {
 
             Screen.TOUCHPAD -> TouchpadScreen(
                 state = state,
-                session = session,
+                onTouchStart = { session.onTouchStart() },
+                onMove = { dx, dy -> session.moveCursorBy(dx, dy) },
+                onSpeed = { session.setSpeed(it) },
                 onOpenMenu = { screen = Screen.MENU },
             )
 

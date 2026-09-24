@@ -74,7 +74,7 @@ object EvenHubResult {
         TEXT_SUCCESS -> "Text ok"
         TEXT_FAILED -> "Text fehlgeschlagen"
         SHUTDOWN_SUCCESS -> "Seite geschlossen"
-        SHUTDOWN_FAILED -> "Schliessen fehlgeschlagen"
+        SHUTDOWN_FAILED -> "Schließen fehlgeschlagen"
         HEARTBEAT_SUCCESS -> "Heartbeat ok"
         else -> "Code $code"
     }
@@ -135,7 +135,7 @@ data class ImageContainer(
 ) {
     init {
         require(name.length <= 14) { "Containername '$name' zu lang (max 14)" }
-        require(width in 20..288 && height in 20..144) { "Bildcontainer ${width}x$height ausserhalb 20..288 x 20..144" }
+        require(width in 20..288 && height in 20..144) { "Bildcontainer ${width}x$height außerhalb 20..288 x 20..144" }
     }
 }
 

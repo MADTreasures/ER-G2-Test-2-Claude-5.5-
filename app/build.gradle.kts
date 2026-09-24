@@ -41,6 +41,7 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -61,4 +62,23 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
+}
+
+// The touchpad gesture test runs the UI under Robolectric; the first run downloads its Android
+// runtime jar (~100 MB). Rewriting docs/screenshots only happens on request:
+// ./gradlew :app:testDebugUnitTest -Pscreenshots
+tasks.withType<Test>().configureEach {
+    // Robolectric's SDK 36 runtime needs this on JDK 17+.
+    jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
+    (project.findProperty("robolectricRepo") as String?)?.let {
+        systemProperty("robolectric.dependency.repo.url", it)
+    }
+    if (project.hasProperty("screenshots")) {
+        systemProperty("screenshotDir", rootProject.file("docs/screenshots").absolutePath)
+    } else {
+        exclude("**/*ScreenshotTest*")
+    }
 }

@@ -300,7 +300,7 @@ class FakeGlasses(private val scope: CoroutineScope) {
         for (m in i) {
             val w = m.int(3) ?: 0
             val h = m.int(4) ?: 0
-            if (w !in 20..288 || h !in 20..144) violations += "Bildgrösse ${w}x$h"
+            if (w !in 20..288 || h !in 20..144) violations += "Bildgröße ${w}x$h"
             images[m.int(5) ?: -1] = ImageBox(m.int(5) ?: -1, m.string(6) ?: "", m.int(1) ?: 0, m.int(2) ?: 0, w, h)
         }
         return Unit
@@ -319,7 +319,7 @@ class FakeGlasses(private val scope: CoroutineScope) {
             ok = false
         }
         if ((f.int(5) ?: 0) != 0) violations += "compressMode != 0"
-        if (data.size != (f.int(7) ?: -1)) violations += "Fragmentgrösse stimmt nicht"
+        if (data.size != (f.int(7) ?: -1)) violations += "Fragmentgröße stimmt nicht"
         if (data.size > 4096) violations += "Fragment > 4096 B"
         var tr = transfers[id]
         if (index == 0) {
@@ -356,7 +356,7 @@ class FakeGlasses(private val scope: CoroutineScope) {
         if (bmp.size < 0x36 || bmp[0] != 'B'.code.toByte() || bmp[1] != 'M'.code.toByte()) violations += "kein BMP"
         else {
             if (bmp[28].toInt() != 4) violations += "BMP nicht 4 bpp"
-            if (le32(18) != box.w || le32(22) != box.h) violations += "BMP-Grösse passt nicht zum Container"
+            if (le32(18) != box.w || le32(22) != box.h) violations += "BMP-Größe passt nicht zum Container"
         }
     }
 

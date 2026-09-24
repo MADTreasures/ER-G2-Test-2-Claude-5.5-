@@ -8,8 +8,9 @@ package ch.madtreasures.g2direct.protocol
  *            line, so - like MentraOS - a dedicated invisible container takes it.
  * - `frame`  full-screen text container with a border; its single text line holds the
  *            title and the live info (cursor position, update counter).
- * - `box`    80x80 bordered box around the display centre. The cursor starts in its middle,
- *            so wrong glyph metrics are immediately visible as an off-centre cursor.
+ * - `box`    80x80 bordered box around (290, 143), the grid position closest to the display
+ *            centre. The cursor starts exactly in its middle, so wrong glyph metrics on the
+ *            real glasses show up as an off-centre cursor.
  * - `cur0..4` five transparent full-width text layers carrying the cursor ([CursorLayers]).
  * - `wedge`  192x24 image with 16 grey steps at the bottom: checks the image channel and the
  *            4-bit grey levels. The firmware paints images above all text, so the cursor is
@@ -52,7 +53,7 @@ object TestPage {
             borderWidth = 2, borderColor = 12, borderRadius = 8, padding = 6,
         )
         list += TextContainer(
-            id = BOX_ID, name = "box", x = 248, y = 104, width = 80, height = 80,
+            id = BOX_ID, name = "box", x = 250, y = 103, width = 80, height = 80,
             content = "", borderWidth = 1, borderColor = 7, borderRadius = 6,
         )
         for (layer in CursorLayers.LAYER_OFFSETS.indices) {

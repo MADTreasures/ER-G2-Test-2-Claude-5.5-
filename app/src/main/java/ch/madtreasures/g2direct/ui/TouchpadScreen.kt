@@ -31,12 +31,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import ch.madtreasures.g2direct.ble.ArmPhase
-import ch.madtreasures.g2direct.ble.G2Session
 import ch.madtreasures.g2direct.ble.PageState
 import ch.madtreasures.g2direct.ble.SessionState
 import ch.madtreasures.g2direct.ble.Severity
@@ -51,11 +51,21 @@ import kotlin.math.hypot
  * finger still for a moment opens the menu, the crown changes the pointer speed.
  */
 @Composable
-fun TouchpadScreen(state: SessionState, session: G2Session, onOpenMenu: () -> Unit) {
+fun TouchpadScreen(
+    state: SessionState,
+    onTouchStart: () -> Unit,
+    onMove: (dx: Float, dy: Float) -> Unit,
+    onSpeed: (Float) -> Unit,
+    onOpenMenu: () -> Unit,
+) {
     val haptics = LocalHapticFeedback.current
     val density = LocalDensity.current.density
     val speed by rememberUpdatedState(state.speed)
     val openMenu by rememberUpdatedState(onOpenMenu)
+    // pointerInput(Unit) lives as long as the screen; always call the latest callbacks.
+    val touchStart by rememberUpdatedState(onTouchStart)
+    val move by rememberUpdatedState(onMove)
+    val setSpeed by rememberUpdatedState(onSpeed)
     val focusRequester = remember { FocusRequester() }
     var speedShownAt by remember { mutableLongStateOf(0L) }
     var touching by remember { mutableStateOf(false) }
@@ -73,7 +83,7 @@ fun TouchpadScreen(state: SessionState, session: G2Session, onOpenMenu: () -> Un
             .fillMaxSize()
             .background(Color.Black)
             .onRotaryScrollEvent { event ->
-                session.setSpeed(speed + event.verticalScrollPixels / 500f)
+                setSpeed(speed + event.verticalScrollPixels / 500f)
                 speedShownAt = System.currentTimeMillis()
                 true
             }
@@ -83,7 +93,7 @@ fun TouchpadScreen(state: SessionState, session: G2Session, onOpenMenu: () -> Un
                 relativeTouchpad(
                     onDown = {
                         touching = true
-                        session.onTouchStart()
+                        touchStart()
                     },
                     onMove = { dx, dy, dtMs ->
                         // Watch pixels -> dp -> glasses pixels, with mild pointer acceleration:
@@ -93,7 +103,7 @@ fun TouchpadScreen(state: SessionState, session: G2Session, onOpenMenu: () -> Un
                         val velocity = hypot(ddx, ddy) / dtMs
                         val accel = (0.55f + velocity * 1.2f).coerceIn(0.55f, 2.6f)
                         val k = BASE_GAIN * speed * accel
-                        session.moveCursorBy(ddx * k, ddy * k)
+                        move(ddx * k, ddy * k)
                     },
                     onUp = { touching = false },
                     onLongPress = {
@@ -104,10 +114,12 @@ fun TouchpadScreen(state: SessionState, session: G2Session, onOpenMenu: () -> Un
             },
         contentAlignment = Alignment.Center,
     ) {
+        // Everything here is read-only status; the whole surface stays a touchpad. The layout
+        // is kept short so it fits inside the round display below the time.
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 26.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             ArmsLine(state)
             Text(
@@ -121,7 +133,10 @@ fun TouchpadScreen(state: SessionState, session: G2Session, onOpenMenu: () -> Un
                 PageState.UNCONFIRMED, PageState.CREATING, PageState.HIDDEN -> WarnOrange
                 else -> ErrorRed
             }
-            Text("Brille: ${state.page.label}", fontSize = 13.sp, color = pageColor, textAlign = TextAlign.Center)
+            Text(
+                "Anzeige: ${state.page.label}", fontSize = 13.sp, color = pageColor,
+                textAlign = TextAlign.Center, maxLines = 1,
+            )
             val s = state.stats
             Text(
                 String.format(Locale.GERMANY, "%.0f/s · Ø %d ms", s.updatesPerSecond, s.ackMsAvg) +
@@ -129,23 +144,32 @@ fun TouchpadScreen(state: SessionState, session: G2Session, onOpenMenu: () -> Un
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            state.lastGlassesInput?.let {
-                Text("Eingabe Brille: $it", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
             val notice = state.notice
-            if (notice != null && notice.severity != Severity.INFO &&
+            val showNotice = notice != null && notice.severity != Severity.INFO &&
                 System.currentTimeMillis() - notice.atMs < 60_000
-            ) {
-                NoticeText(notice)
+            if (showNotice && notice != null) {
+                Text(
+                    notice.text,
+                    color = if (notice.severity == Severity.ERROR) ErrorRed else WarnOrange,
+                    fontSize = 12.sp, lineHeight = 14.sp, maxLines = 3, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                state.lastGlassesInput?.let {
+                    Text("Brille-Eingabe: $it", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                }
             }
             if (speedShownAt != 0L) {
                 Text(String.format(Locale.GERMANY, "Tempo %.1f×", state.speed), fontSize = 16.sp, color = WarnOrange)
-            } else {
+            } else if (!showNotice) {
+                // Two short lines: the round display is too narrow this far down for one.
                 Text(
-                    "Wischen = Cursor · Halten = Menü",
+                    "Wischen = Cursor\nHalten = Menü",
                     fontSize = 11.sp,
+                    lineHeight = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
+                    maxLines = 2,
                 )
             }
         }

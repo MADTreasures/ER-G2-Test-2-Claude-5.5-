@@ -58,7 +58,7 @@ class SessionEngine(
     private var targetX = 288f
     private var targetY = 144f
     @Volatile
-    private var style = CursorLayers.Style.CROSSHAIR_LARGE
+    private var style = CursorLayers.Style.CROSSHAIR
     private val cursorSignal = Channel<Unit>(Channel.CONFLATED)
 
     // ---- session-thread state ----
@@ -781,7 +781,7 @@ class SessionEngine(
                 pageLost("Brille hat die Testseite beendet (${OsEvent.describe(event.type)})")
             OsEvent.FOREGROUND_EXIT -> {
                 _state.update { it.copy(page = PageState.HIDDEN) }
-                notice(Severity.WARN, "Testseite im Hintergrund (z. B. Dashboard) – Touchpad berühren zum Zurückholen")
+                notice(Severity.WARN, "Testbild im Hintergrund – Touchpad berühren zum Zurückholen")
             }
             OsEvent.FOREGROUND_ENTER -> if (_state.value.page == PageState.HIDDEN) {
                 _state.update { it.copy(page = PageState.ACTIVE) }
@@ -794,7 +794,9 @@ class SessionEngine(
     private fun pageLost(reason: String) {
         if (_state.value.page == PageState.LOST) return
         _state.update { it.copy(page = PageState.LOST) }
-        notice(Severity.WARN, "$reason – Touchpad berühren oder „Testbild neu senden“ wählen")
+        log(reason)
+        // Short and action first: the touchpad screen only has room for about three lines.
+        notice(Severity.WARN, "Testbild geschlossen – Touchpad berühren zum Neuaufbau")
     }
 
     // =========================================================================================
