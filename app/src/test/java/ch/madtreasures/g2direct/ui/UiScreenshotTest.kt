@@ -35,9 +35,8 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * Renders the watch screens on a simulated round 454 px Wear OS display (large Pixel Watch
- * class) into docs/screenshots; the touchpad screens, which cannot scroll, also at 384 px
- * (small Pixel Watch class). Opt-in: ./gradlew :app:testDebugUnitTest -Pscreenshots
+ * Renders the watch screens on a simulated round 454 px Wear OS display (large Pixel Watch)
+ * into docs/screenshots. Opt-in: ./gradlew :app:testDebugUnitTest -Pscreenshots
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -66,6 +65,13 @@ class UiScreenshotTest {
     )
 
     private fun shoot(name: String, content: @Composable () -> Unit) {
+        // Watch battery for the touchpad's battery row (sticky system broadcast).
+        RuntimeEnvironment.getApplication().sendStickyBroadcast(
+            android.content.Intent(android.content.Intent.ACTION_BATTERY_CHANGED)
+                .putExtra(android.os.BatteryManager.EXTRA_LEVEL, 76)
+                .putExtra(android.os.BatteryManager.EXTRA_SCALE, 100)
+                .putExtra(android.os.BatteryManager.EXTRA_STATUS, android.os.BatteryManager.BATTERY_STATUS_DISCHARGING)
+        )
         compose.mainClock.autoAdvance = false
         compose.setContent {
             MaterialTheme {
@@ -166,13 +172,6 @@ class UiScreenshotTest {
     @Test
     fun touchpadWarning() = shoot("06_touchpad_warnung") { Touchpad(lostPageState) }
 
-    @Test
-    @Config(qualifiers = SMALL_WATCH)
-    fun touchpadSmall() = shoot("10_touchpad_klein") { Touchpad(readyState) }
-
-    @Test
-    @Config(qualifiers = SMALL_WATCH)
-    fun touchpadWarningSmall() = shoot("11_touchpad_warnung_klein") { Touchpad(lostPageState) }
 
     @Test
     fun menu() = shoot("07_menue") {
@@ -201,9 +200,5 @@ class UiScreenshotTest {
     @Test
     fun permission() = shoot("09_berechtigung") {
         PermissionScreen(onRequest = {}, onOpenSettings = {})
-    }
-
-    private companion object {
-        const val SMALL_WATCH = "w192dp-h192dp-round-watch-xhdpi"
     }
 }

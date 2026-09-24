@@ -61,7 +61,8 @@ Pixel Watch (App „G2 Direct“)
 | Rückfall auf Festtakt, wenn keine Bestätigungen kommen | ✅ | Simulation | nicht nötig: die Brille bestätigt (Ø 141 ms gemessen) |
 | Heartbeats, Neuaufbau nach dem Schließen der Seite durch die Brille | ✅ | Simulation | unbestätigt |
 | Neu verbinden (bis zu 3×), Weiterlaufen ohne linken Bügel | ✅ | Simulation | unbestätigt |
-| Status und Fehlermeldungen auf der Uhr | ✅ | Screenshots auf zwei runden Displaygrößen (384 und 454 px) | ✅ Touchpad-Anzeige bestätigt |
+| Status und Fehlermeldungen auf der Uhr | ✅ | Screenshots auf dem runden 454-px-Display (große Pixel Watch) | ✅ Touchpad-Anzeige bestätigt |
+| Akku-Anzeige oben auf dem Touchpad: Uhr-Symbol mit Akku der Uhr, Brillen-Symbol mit Akku der Brille (⚡ beim Laden; Brillen-Symbol grün/orange/rot je nach Verbindung) | ✅ | Screenshot | **neu, unbestätigt** |
 | Protokoll-Ansicht auf der Uhr, `logcat` | ✅ | Screenshot | – |
 
 **Beim ersten Hardware-Test beantwortet:** Die Brille nimmt die Uhr ohne Smartphone an, die Firmware akzeptiert die Testseite und das Bild, sie bestätigt Text-Updates (Ø 141 ms) und stellt die Einrückung mit U+00A0 dar.
@@ -87,8 +88,8 @@ Die App läuft ab Wear OS 3 (API 30). Sie heißt **G2 Direct**, das Paket `ch.ma
 
 | Was | Link |
 |---|---|
-| APK (29 MB, Debug-Build, SDK 37) | [g2direct-0.2.0-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.0-debug.apk) |
-| Prüfsumme (SHA-256) | [g2direct-0.2.0-debug.apk.sha256](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/blob/claude/zen-newton-15o9rd/release/g2direct-0.2.0-debug.apk.sha256) |
+| APK (29 MB, Debug-Build, SDK 37) | [g2direct-0.2.1-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.1-debug.apk) |
+| Prüfsumme (SHA-256) | [g2direct-0.2.1-debug.apk.sha256](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/blob/claude/zen-newton-15o9rd/release/g2direct-0.2.1-debug.apk.sha256) |
 | `adb` für den Mac, falls nicht über Android Studio installiert | [SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) |
 | Anleitung von Google: Uhr per WLAN verbinden | [Debug Wear OS over Wi-Fi](https://developer.android.com/training/wearables/get-started/debug-wifi) |
 
@@ -102,9 +103,9 @@ Die App läuft ab Wear OS 3 (API 30). Sie heißt **G2 Direct**, das Paket `ch.ma
    Meldet der Mac `command not found: adb`, liegt `adb` im SDK von Android Studio: `export PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"`.
 3. APK laden, prüfen, installieren und starten:
    ```bash
-   curl -L -o g2direct-0.2.0-debug.apk https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.0-debug.apk
-   shasum -a 256 g2direct-0.2.0-debug.apk     # muss mit der Prüfsumme oben übereinstimmen
-   adb install -r g2direct-0.2.0-debug.apk    # bei mehreren Geräten: adb -s <IP>:<Port> install -r …
+   curl -L -o g2direct-0.2.1-debug.apk https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.1-debug.apk
+   shasum -a 256 g2direct-0.2.1-debug.apk     # muss mit der Prüfsumme oben übereinstimmen
+   adb install -r g2direct-0.2.1-debug.apk    # bei mehreren Geräten: adb -s <IP>:<Port> install -r …
    adb shell am start -n ch.madtreasures.g2direct/.MainActivity
    ```
 
@@ -162,7 +163,8 @@ Bedienung des Touchpads:
 - **Krone drehen** ändert das Tempo.
 - **Finger etwa 1 s ruhig halten** öffnet das Menü, die Uhr vibriert dabei.
 - Es gibt keine Pfeiltasten und keine Zonen. Die Texte auf dem Touchpad sind nur Anzeige:
-  - Punkte für den linken und rechten Bügel, Akku
+  - oben Akku der Uhr (Uhr-Symbol) und der Brille (Brillen-Symbol)
+  - Punkte für den linken und rechten Bügel
   - Cursor-Position
   - „Anzeige: aktiv/unbestätigt/…“
   - Updates pro Sekunde und durchschnittliche Antwortzeit der Brille
@@ -178,7 +180,7 @@ Weitere Hinweise:
 |---|---|---|---|
 | ![Brille wählen](docs/screenshots/01_brille_waehlen.png) | ![Verbindungsaufbau](docs/screenshots/03_verbindung.png) | ![Touchpad](docs/screenshots/05_touchpad.png) | ![Menü](docs/screenshots/07_menue.png) |
 
-*Die Bilder sind unter Robolectric auf einem simulierten runden Display gerendert, es sind keine Fotos der Uhr.* Weitere Bilder liegen in [docs/screenshots](docs/screenshots): Fehler, Warnung, Protokoll, kleines Display.
+*Die Bilder sind unter Robolectric auf einem simulierten runden Display gerendert, es sind keine Fotos der Uhr.* Weitere Bilder liegen in [docs/screenshots](docs/screenshots): Fehler, Warnung, Protokoll.
 
 ## 6. Was du auf der Brille sehen solltest
 

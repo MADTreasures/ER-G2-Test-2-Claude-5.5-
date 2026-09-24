@@ -316,7 +316,7 @@ fun MenuScreen(
             armItems(state)
             item {
                 val s = state.stats
-                val battery = state.battery?.let { "Akku $it %" + if (state.charging == true) " ⚡" else "" } ?: "Akku ?"
+                val battery = state.battery?.let { "Brillen-Akku $it %" + if (state.charging == true) " ⚡" else "" } ?: "Brillen-Akku ?"
                 CenterText(
                     "$battery · FW ${state.firmware ?: "?"}\n" +
                         "Anzeige: ${state.page.label} · ${state.screen} · Bild: ${state.imageStatus}\n" +

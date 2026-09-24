@@ -70,6 +70,7 @@ fun TouchpadScreen(
     val setSpeed by rememberUpdatedState(onSpeed)
     val doubleTap by rememberUpdatedState(onDoubleTap)
     var lastTapAt by remember { mutableLongStateOf(-10_000L) }
+    val watchBattery = rememberWatchBattery()
     val focusRequester = remember { FocusRequester() }
     var speedShownAt by remember { mutableLongStateOf(0L) }
     var touching by remember { mutableStateOf(false) }
@@ -134,6 +135,7 @@ fun TouchpadScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
+            BatteryRow(watchBattery, state.battery, state.charging, armsColor(state))
             ArmsLine(state)
             Text(
                 "X ${state.cursorX}  ·  Y ${state.cursorY}",
@@ -191,16 +193,17 @@ fun TouchpadScreen(
     }
 }
 
+/** Green: both arms connected, orange: only the right one, red: no display link. */
+private fun armsColor(state: SessionState): Color = when {
+    state.right.phase != ArmPhase.READY -> ErrorRed
+    state.left.phase != ArmPhase.READY -> WarnOrange
+    else -> OkGreen
+}
+
 @Composable
 private fun ArmsLine(state: SessionState) {
     fun mark(p: ArmPhase) = if (p == ArmPhase.READY) "●" else "○"
-    val color = when {
-        state.right.phase != ArmPhase.READY -> ErrorRed
-        state.left.phase != ArmPhase.READY -> WarnOrange
-        else -> OkGreen
-    }
-    val battery = state.battery?.let { "  ·  $it %" } ?: ""
-    Text("L ${mark(state.left.phase)}   R ${mark(state.right.phase)}$battery", fontSize = 13.sp, color = color)
+    Text("L ${mark(state.left.phase)}   R ${mark(state.right.phase)}", fontSize = 13.sp, color = armsColor(state))
 }
 
 /** Glasses pixels per watch dp at speed 1.0 before acceleration. */
