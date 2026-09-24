@@ -279,7 +279,7 @@ Technik:
 | Sprache und UI | Kotlin 2.4.20, Compose for Wear OS (Material 3) 1.7.0 |
 | SDK | compileSdk und targetSdk 37, minSdk 30 |
 
-Alle Versionen stehen in `gradle/libs.versions.toml` (Stand September 2026 jeweils die aktuelle stabile Version). Gebaut und getestet mit Java 21 und Java 25.
+Alle Versionen stehen in `gradle/libs.versions.toml` (Stand September 2026 jeweils die aktuelle stabile Version). Gebaut und getestet mit Java 25.
 
 ## 10. Grenzen und Hinweise
 
