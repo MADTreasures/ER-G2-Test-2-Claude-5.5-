@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The touchpad uses horizontal swipes as input, so the whole-window
+         swipe-to-dismiss of Wear OS is disabled. The crown leaves the app. -->
+    <style name="Theme.G2Direct" parent="@android:style/Theme.DeviceDefault">
+        <item name="android:windowSwipeToDismiss">false</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>
