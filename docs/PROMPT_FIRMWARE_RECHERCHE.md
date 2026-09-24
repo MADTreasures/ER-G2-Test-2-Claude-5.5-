@@ -35,11 +35,19 @@ Ich möchte herausfinden, ob und wie man für die Datenbrille **Even Realities G
 4. **Stand von openCFW**: Was funktioniert dort wirklich, was ist nur Analyse? Gibt es Berichte über erfolgreich geflashte oder zerstörte („gebrickte“) Brillen?
 5. **Wiederherstellung**: Kommt man nach einem fehlgeschlagenen Update zurück zur Original-Firmware (Recovery-Modus, Bootloader, Debug-Schnittstelle SWD/JTAG, Test-Pads)?
 6. **Weniger riskante Alternativen**: Gibt es in der Standard-Firmware ungenutzte Befehle (z. B. direkter Framebuffer, Sprites, Container verschieben, schnellere Updates), die ein Großteil meiner Ziele ohne eigene Firmware erreichen?
-7. **Rechtliches und Garantie**: Garantieverlust, Funkzulassung (BLE-Parameter dürfen nicht verändert werden), Lizenz der Original-Firmware, Nutzungsbedingungen von Even Realities.
+7. **Vorteile einer eigenen Firmware**: Was wäre damit konkret möglich, was die Standard-Firmware nicht kann, und wie viel bringt es für meinen Anwendungsfall (Uhr als Rechner, Brille als Anzeige mit Mauszeiger)? Bitte jeden Punkt mit Aufwand und Machbarkeit bewerten, z. B.:
+   - direkter Zugriff auf den Bildspeicher, frei gezeichneter Mauszeiger/Sprites, eigenes Zeichenprotokoll statt Container
+   - höhere Update-Rate und geringere Latenz (eigenes, schlankeres BLE-Protokoll, größere Pakete, anderes Verbindungsintervall)
+   - keine Container-Grenzen, eigene Schriften und Symbole, echte Graustufen-Grafik
+   - Verhalten ohne Even-App: Energiesparen, Weckgesten, Sensoren (Touchflächen, IMU/Kopfbewegung, Mikrofon), Akku-Management
+   - Abhängigkeit vom Hersteller: keine Überraschungen durch Firmware-Updates
+   Und was man dafür **verliert**: offizielle Funktionen (Even-App, Updates, KI, Übersetzung, Benachrichtigungen), Garantie, ggf. Zulassung.
+8. **Rechtliches und Garantie**: Garantieverlust, Funkzulassung (BLE-Parameter dürfen nicht verändert werden), Lizenz der Original-Firmware, Nutzungsbedingungen von Even Realities.
 
 ## Gewünschtes Ergebnis
 
 Ein Dokument `RECHERCHE_FIRMWARE.md` mit:
+- eine Gegenüberstellung Vorteile / Nachteile / Aufwand (Frage 7) als Tabelle
 - Antworten auf die Fragen oben, jede Aussage mit Quelle und Sicherheit (belegt / wahrscheinlich / Vermutung)
 - einer Risikobewertung (Wahrscheinlichkeit und Folgen eines Fehlschlags, Wiederherstellbarkeit)
 - einer klaren Empfehlung: eigene Firmware ja/nein/später, und falls ja, ein Stufenplan, der mit ungefährlichen Schritten beginnt (nur lesen/analysieren, Emulation, dann erst Hardware)
