@@ -81,37 +81,70 @@ Pixel Watch (App „G2 Direct“)
 4. Koppeln in den Uhr-Einstellungen ist **nicht nötig**. Bereits gekoppelte Bügel erscheinen trotzdem in der Liste. Zeigt die Uhr beim Verbinden einen Kopplungsdialog, bestätige ihn.
 5. Wenn gar nichts geht: Brille neu starten. Laut [men-g2-ble-gateway](https://github.com/gpsnmeajp/men-g2-ble-gateway) tippst du dazu 5× schnell auf beide Touchflächen.
 
-## 4. Bauen und installieren
+## 4. Installieren
+
+Die App läuft ab Wear OS 3 (API 30). Sie heißt **G2 Direct**, das Paket `ch.madtreasures.g2direct`.
+
+### A) Fertige APK per WLAN-ADB installieren (ohne Android Studio)
+
+| Was | Link |
+|---|---|
+| APK (26 MB, Debug-Build aus Commit `f629bfc`) | [g2direct-0.1.0-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk) |
+| Prüfsumme (SHA-256) | [g2direct-0.1.0-debug.apk.sha256](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/blob/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk.sha256) |
+| `adb` für den Mac, falls nicht über Android Studio installiert | [SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) |
+| Anleitung von Google: Uhr per WLAN verbinden | [Debug Wear OS over Wi-Fi](https://developer.android.com/training/wearables/get-started/debug-wifi) |
+
+1. Auf der Uhr unter *Einstellungen → Entwickleroptionen* **ADB-Debugging** und **Debugging über WLAN** (englisch *Wireless debugging*) einschalten.
+2. Auf dem Mac koppeln und verbinden. Das Koppeln ist nur beim ersten Mal nötig. IP-Adresse, Ports und Code zeigt die Uhr unter *Debugging über WLAN* bzw. *Neues Gerät koppeln*. Der Port zum Verbinden ist ein anderer als der Kopplungsport.
+   ```bash
+   adb pair <IP>:<Kopplungsport>
+   adb connect <IP>:<Port>
+   adb devices                    # die Uhr muss als "device" erscheinen
+   ```
+   Meldet der Mac `command not found: adb`, liegt `adb` im SDK von Android Studio: `export PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"`.
+3. APK laden, prüfen, installieren und starten:
+   ```bash
+   curl -L -o g2direct-0.1.0-debug.apk https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.1.0-debug.apk
+   shasum -a 256 g2direct-0.1.0-debug.apk     # muss mit der Prüfsumme oben übereinstimmen
+   adb install -r g2direct-0.1.0-debug.apk    # bei mehreren Geräten: adb -s <IP>:<Port> install -r …
+   adb shell am start -n ch.madtreasures.g2direct/.MainActivity
+   ```
+
+Die APK ist mit einem Debug-Schlüssel signiert. Wechselst du später zu einer selbst gebauten Version oder umgekehrt, bricht `adb install` mit `INSTALL_FAILED_UPDATE_INCOMPATIBLE` ab. Dann zuerst die alte Version entfernen: `adb uninstall ch.madtreasures.g2direct`.
+
+### B) Mit Android Studio bauen (Mac)
+
+| Was | Link |
+|---|---|
+| Android Studio | [developer.android.com/studio](https://developer.android.com/studio) |
+| Quellcode (Branch) | [claude/zen-newton-15o9rd](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/tree/claude/zen-newton-15o9rd) |
+| Quellcode als ZIP | [ZIP herunterladen](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/archive/refs/heads/claude/zen-newton-15o9rd.zip) |
+| Git-URL zum Klonen | `https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-.git` |
 
 Voraussetzungen:
 - Android Studio mit Android SDK Platform 36
 - JDK 17 oder neuer (das in Android Studio enthaltene JBR genügt)
-- Die Uhr ist per WLAN-ADB verbunden.
 
-Die App läuft ab Wear OS 3 (API 30).
-
-**Android Studio (Mac)**
-
-1. Repository holen und den Branch auschecken:
+1. Projekt holen: entweder die ZIP-Datei entpacken oder klonen:
    ```bash
    git clone https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-.git
    cd ER-G2-Test-2-Claude-5.5-
    git checkout claude/zen-newton-15o9rd
    ```
 2. In Android Studio *File → Open* wählen und den Ordner öffnen. Den Gradle-Sync abwarten. Fehlt die SDK Platform 36, bietet Android Studio die Installation an.
-3. Oben die Uhr als Gerät und die Konfiguration **app** wählen, dann ▶ *Run*.
+3. Die Uhr wie unter A) per `adb connect` verbinden. Dann oben die Uhr als Gerät und die Konfiguration **app** wählen und ▶ *Run* drücken.
 
-**Kommandozeile**
+### C) Kommandozeile
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+chmod +x gradlew                 # nur nötig, wenn das Projekt als ZIP geladen wurde
 adb devices                      # die Uhr muss als "device" erscheinen
-./gradlew :app:installDebug      # bei mehreren Geräten: ANDROID_SERIAL=<ip:port> voranstellen
+./gradlew :app:installDebug      # bei mehreren Geräten: ANDROID_SERIAL=<IP>:<Port> voranstellen
 adb shell am start -n ch.madtreasures.g2direct/.MainActivity
 ```
 
-- Die App heißt **G2 Direct**, das Paket `ch.madtreasures.g2direct`.
-- Die Debug-APK liegt nach dem Bauen unter `app/build/outputs/apk/debug/app-debug.apk`.
+Die selbst gebaute APK liegt danach unter `app/build/outputs/apk/debug/app-debug.apk`.
 
 ## 5. Bedienung
 
