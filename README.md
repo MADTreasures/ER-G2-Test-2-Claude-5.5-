@@ -247,7 +247,7 @@ Bitte in dieser Reihenfolge vorgehen und die Beobachtungen notieren:
 - besser noch das vollständige Log vom Mac aus:
   ```bash
   adb logcat -c
-  adb logcat -s G2Direct:V > g2direct-log.txt     # während des Tests laufen lassen, danach Ctrl+C
+  adb logcat -v time -s G2Direct:V > g2direct-log.txt     # während des Tests laufen lassen, danach Ctrl+C
   ```
 
 Mit diesem Log lassen sich Abweichungen der Firmware gezielt beheben.
@@ -288,4 +288,5 @@ Alle Versionen stehen in `gradle/libs.versions.toml` (Stand September 2026 jewei
 - Das Protokoll ist inoffiziell. Ein Firmware-Update der G2 kann es ändern.
 - Die App sendet nur Anmelde-, Zeit-, Seiten- und Heartbeat-Nachrichten. Einstellungen der Brille (Dashboard, „Hey Even“, Head-Up) ändert sie **nicht**.
 - Dieses Projekt steht in keiner Verbindung zu Even Realities.
+- Gesammelte Erkenntnisse für die richtige App (bestätigt / simuliert / offen, Standardwerte, Testergebnisse): [docs/ERKENNTNISSE.md](docs/ERKENNTNISSE.md)
 - Quellen und Lizenzen: [docs/PROTOKOLL.md](docs/PROTOKOLL.md#7-quellen) und [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
