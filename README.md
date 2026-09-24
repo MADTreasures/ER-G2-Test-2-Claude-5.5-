@@ -88,8 +88,8 @@ Die App läuft ab Wear OS 3 (API 30). Sie heißt **G2 Direct**, das Paket `ch.ma
 
 | Was | Link |
 |---|---|
-| APK (29 MB, Debug-Build, SDK 37) | [g2direct-0.2.1-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.1-debug.apk) |
-| Prüfsumme (SHA-256) | [g2direct-0.2.1-debug.apk.sha256](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/blob/claude/zen-newton-15o9rd/release/g2direct-0.2.1-debug.apk.sha256) |
+| APK (29 MB, Debug-Build, SDK 37) | [g2direct-0.2.2-debug.apk](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.2-debug.apk) |
+| Prüfsumme (SHA-256) | [g2direct-0.2.2-debug.apk.sha256](https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/blob/claude/zen-newton-15o9rd/release/g2direct-0.2.2-debug.apk.sha256) |
 | `adb` für den Mac, falls nicht über Android Studio installiert | [SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) |
 | Anleitung von Google: Uhr per WLAN verbinden | [Debug Wear OS over Wi-Fi](https://developer.android.com/training/wearables/get-started/debug-wifi) |
 
@@ -103,9 +103,9 @@ Die App läuft ab Wear OS 3 (API 30). Sie heißt **G2 Direct**, das Paket `ch.ma
    Meldet der Mac `command not found: adb`, liegt `adb` im SDK von Android Studio: `export PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"`.
 3. APK laden, prüfen, installieren und starten:
    ```bash
-   curl -L -o g2direct-0.2.1-debug.apk https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.1-debug.apk
-   shasum -a 256 g2direct-0.2.1-debug.apk     # muss mit der Prüfsumme oben übereinstimmen
-   adb install -r g2direct-0.2.1-debug.apk    # bei mehreren Geräten: adb -s <IP>:<Port> install -r …
+   curl -L -o g2direct-0.2.2-debug.apk https://github.com/MADTreasures/ER-G2-Test-2-Claude-5.5-/raw/claude/zen-newton-15o9rd/release/g2direct-0.2.2-debug.apk
+   shasum -a 256 g2direct-0.2.2-debug.apk     # muss mit der Prüfsumme oben übereinstimmen
+   adb install -r g2direct-0.2.2-debug.apk    # bei mehreren Geräten: adb -s <IP>:<Port> install -r …
    adb shell am start -n ch.madtreasures.g2direct/.MainActivity
    ```
 
@@ -154,7 +154,7 @@ Die selbst gebaute APK liegt danach unter `app/build/outputs/apk/debug/app-debug
 | **Brille wählen** | Jede G2 erscheint als **ein** Eintrag mit beiden Bügeln („L ✓ R ✓“), dazu Signalstärke oder „gekoppelt“. Oben steht „zuletzt verwendet“. **Suchen** startet einen neuen Scan von 25 s. |
 | **Status** | Fortschritt je Bügel („verbinde…“, „richte ein…“, „verbunden ✓“), Phase, Anzeige-Status. Fehler stehen rot, Warnungen orange. Während des Aufbaus gibt es **Abbrechen**, nach einem Fehler **Erneut** und **Andere Brille**, immer **Protokoll**. |
 | **Touchpad** | Öffnet sich automatisch, sobald alles bereit ist. |
-| **Menü** | Akku, Firmware und Zähler. Außerdem: *Testbild neu senden*, *Cursor zentrieren*, Cursor-Form (Fadenkreuz / Fadenkreuz groß / Ring), Tempo, **Parallel** (wie viele Updates gleichzeitig unterwegs sein dürfen: mehr = flüssiger, solange die Brille mitkommt), *Protokoll*, *Trennen* |
+| **Menü** | Akku, Firmware und Zähler. Außerdem: *Testbild neu senden*, *Cursor zentrieren*, Cursor-Form (Fadenkreuz, Fadenkreuz groß, Ring und zum Ausprobieren Pfeile ↖ ⬉ und Dreiecke ◤ ▲ – ob die Brille diese Zeichen kennt, ist noch offen), Tempo, **Parallel** (wie viele Updates gleichzeitig unterwegs sein dürfen: mehr = flüssiger, solange die Brille mitkommt), *Protokoll*, *Trennen* |
 
 Bedienung des Touchpads:
 - **Finger irgendwo aufsetzen und bewegen:** Der Cursor bewegt sich relativ. Abheben und woanders neu aufsetzen bewegt ihn nicht.

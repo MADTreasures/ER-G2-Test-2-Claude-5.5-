@@ -8,7 +8,7 @@ Dieses Dokument sammelt, was die Test-App „G2 Direct“ über die direkte Verb
 
 Die Einzelheiten des Protokolls (Byte-Formate, Befehle, Quellen) stehen in [PROTOKOLL.md](PROTOKOLL.md). Hier geht es darum, was davon trägt, was man beachten muss und welche Entscheidungen man übernehmen sollte.
 
-Stand: Version 0.2.1. Erster Hardware-Test mit Version 0.1.0.
+Stand: Version 0.2.2. Erster Hardware-Test mit Version 0.1.0.
 
 ---
 
@@ -57,7 +57,7 @@ Android-Stolperfallen, die im Code (`ble/G2Link.kt`) gelöst sind und in der ric
 | **Text-Updates** sind klein und flimmerfrei. Die Brille bestätigt jedes nach **Ø 141 ms**. | ✅ gemessen |
 | Die Firmware verwirft **führende ASCII-Leerzeichen**. Einrücken mit **U+00A0** (geschütztes Leerzeichen, 5 px) funktioniert. | ✅ |
 | Zeilenhöhe 27 px. Glyphenbreiten aus `@evenrealities/pretext` stimmen (Titelzeile passt). | ✅ |
-| Die Schrift kennt ASCII, Umlaute, ß, `» « „ “ – · ━ ┃ ╋ ◎ █`, aber **keine Pfeile** (→ ▶ ►), kein ● ○ × ✕ | aus pretext, ❓ auf Hardware nur teilweise gesehen |
+| Die veröffentlichte Zeichentabelle (`@evenrealities/pretext`, 415 Zeichen) enthält ASCII, Umlaute, ß, `» « „ “ – · •`, aber keine Symbole. Sie ist **unvollständig**: `╋` fehlt darin und wird trotzdem angezeigt. Welche Symbole (Pfeile, Dreiecke …) die Brille wirklich kann, muss man auf Hardware ausprobieren. | ✅ `╋` sichtbar, ❓ Pfeile: im Menü „Cursor“ testen |
 | Seitenwechsel per REBUILD (Fenster öffnen/schließen) | 🧪 |
 
 ## 4. Cursor und Bedienung
@@ -101,7 +101,12 @@ Android-Stolperfallen, die im Code (`ble/G2Link.kt`) gelöst sind und in der ric
 
 - **Vordergrund-Dienst** für die Verbindung. Die Test-App hält den Bildschirm an und läuft sonst nur, solange Wear OS sie nicht beendet.
 - **Oberflächen-Bausteine für die Brille**: Buttons, Listen, Fenster, Cursor als wiederverwendbare Komponenten über einer allgemeinen Schnittstelle („Seite anzeigen“, „Text ändern“, Ereignisse) statt einer fest verdrahteten Testseite.
-- **Container-Budget planen**: 8 Textcontainer pro Seite, davon gehen 1 (Ereignisse) + 4 (Cursor) weg, bleiben 3 für Inhalte. Für mehr Inhalt: mehrere Elemente in einem Textcontainer zusammenfassen oder Bilder nutzen (dann ohne Cursor darüber).
+- **Kästen pro Seite planen**: Die Brille zeigt eine Seite als Bauplan aus rechteckigen Kästen (Textcontainern), höchstens **8 pro Seite**. Davon braucht es 1 unsichtbaren für Eingaben der Brille und 4 für den Cursor (ein Zeichen in durchsichtigen, bildschirmbreiten Ebenen, die ~7 px versetzt übereinanderliegen – nur so lässt er sich senkrecht fein bewegen). Es bleiben **3 Kästen** für Inhalte. Das begrenzt die Zahl der Kästen, nicht die Menge an Inhalt:
+  - Ein Kasten kann viele Zeilen enthalten (eine ganze Liste oder ein Menü).
+  - Was anklickbar ist, rechnet die App selbst aus; die Markierung » « lässt sich in jeder Zeile setzen. Ein Menü mit 6 Einträgen ist also ein einziger Kasten.
+  - Einen eigenen Kasten brauchen nur Dinge mit eigenem Rahmen oder eigener Position.
+  - Weniger Cursor-Ebenen machen Kästen frei (2 Ebenen → 5 Kästen, dafür ~14 px senkrechte Schritte); Seiten ohne Cursor haben 7.
+  - Jede Seite hat wieder 8 Kästen.
 - **Energie**: Heartbeats, Verbindungspriorität und Bildschirm-an kosten Akku auf beiden Seiten; messen.
 - **Kern wiederverwenden**: `protocol/`, `ble/` und der Simulator `FakeGlasses` als Modul `g2-core` herauslösen, damit Test-App und richtige App denselben, getesteten Code nutzen.
 
@@ -116,4 +121,5 @@ Hier die Ergebnisse jedes Hardware-Tests eintragen (Datum, Version, Beobachtung,
 | | 0.2.1 | Feld zeigen (» «), Doppeltipp, Fenster, Schließen | |
 | | 0.2.1 | Einzeltipp verschiebt Cursor nicht | |
 | | 0.2.1 | Akku-Zeile Uhr/Brille | |
+| | 0.2.2 | Cursor-Formen: welche Pfeile/Dreiecke zeigt die Brille, sitzt die Spitze richtig? | |
 | | 0.2.1 | Beide Linsen? Stabil über 5+ Minuten? | |

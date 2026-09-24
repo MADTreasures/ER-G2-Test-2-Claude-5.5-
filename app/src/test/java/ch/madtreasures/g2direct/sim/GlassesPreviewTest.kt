@@ -115,6 +115,12 @@ class GlassesPreviewTest {
             '━' -> f.fill(x, cy - 2, 20, 4, c)
             '┃' -> f.fill(cx - 2, y, 4, 27, c)
             '╋' -> { f.fill(x, cy - 2, 20, 4, c); f.fill(cx - 2, y, 4, 27, c) }
+            '↖', '⬉' -> for (i in 0 until 14) {
+                f.fill(x + 3 + i, y + 7 + i, 3, 3, c)
+                if (i < 8) { f.fill(x + 3 + i, y + 7, 2, 2, c); f.fill(x + 3, y + 7 + i, 2, 2, c) }
+            }
+            '◤' -> for (i in 0 until 16) f.fill(x + 3, y + 6 + i, 16 - i, 1, c)
+            '▲' -> for (i in 0 until 14) f.fill(x + 10 - i / 2, y + 7 + i, i + 1, 1, c)
             '◎' -> for (a in 0 until 360 step 4) {
                 val r = Math.toRadians(a.toDouble())
                 f.set(cx + (9 * Math.cos(r)).toInt(), cy + (9 * Math.sin(r)).toInt(), c)

@@ -43,7 +43,7 @@ class SessionEngineTest {
         runCurrent()
     }
 
-    private fun Rig.cursorGlyphs() = glasses.glyphs().filter { it.ch == '╋' || it.ch == '◎' }
+    private fun Rig.cursorGlyphs() = glasses.glyphs().filter { it.ch == engine.state.value.style.pointGlyph }
 
     /** Checks that the glasses show exactly one cursor, where the engine says it is. */
     private fun Rig.assertCursorShownAtReportedPosition() {
@@ -52,9 +52,9 @@ class SessionEngineTest {
         assertEquals("genau ein Cursor sichtbar: $glyphs", 1, glyphs.size)
         val g = glyphs.single()
         val s = engine.state.value
-        // The hot glyph (╋ or ◎) is 20 px wide and sits on the hot line of the block.
-        assertEquals("$style x", s.cursorX, g.x + 10)
-        assertEquals("$style y", s.cursorY, g.y + CursorLayers.LINE_HEIGHT / 2)
+        // The hot spot lies at a fixed offset inside the style's point glyph.
+        assertEquals("$style x", s.cursorX, g.x + style.pointDx)
+        assertEquals("$style y", s.cursorY, g.y + style.pointDy)
     }
 
     private fun Rig.assertNoViolations() {

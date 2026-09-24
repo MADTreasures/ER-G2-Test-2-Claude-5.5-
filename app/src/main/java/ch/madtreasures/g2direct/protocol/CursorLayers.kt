@@ -55,23 +55,53 @@ object CursorLayers {
         /** Hot spot (cursor point) relative to the block's top-left corner, in px. */
         val hotX: Int,
         val hotY: Int,
+        /** The glyph the hot spot lies in, and the hot spot relative to that glyph's top-left. */
+        val pointGlyph: Char,
+        val pointDx: Int,
+        val pointDy: Int,
     ) {
         /** Default: one heavy cross glyph (20 x 27 px), reaches almost the whole display. */
         CROSSHAIR(
             "Fadenkreuz",
             listOf(BlockLine(0, "╋")),
-            hotX = 10, hotY = LINE_HEIGHT / 2,
+            hotX = 10, hotY = LINE_HEIGHT / 2, pointGlyph = '╋', pointDx = 10, pointDy = LINE_HEIGHT / 2,
         ),
         /** 60 x 81 px; its centre cannot come closer than ~40 px to the top/bottom edge. */
         CROSSHAIR_LARGE(
             "Fadenkreuz groß",
             listOf(BlockLine(4, "┃"), BlockLine(0, "━╋━"), BlockLine(4, "┃")),
-            hotX = 30, hotY = LINE_HEIGHT + LINE_HEIGHT / 2,
+            hotX = 30, hotY = LINE_HEIGHT + LINE_HEIGHT / 2, pointGlyph = '╋', pointDx = 10, pointDy = LINE_HEIGHT / 2,
         ),
         RING(
             "Ring",
             listOf(BlockLine(0, "◎")),
-            hotX = 10, hotY = LINE_HEIGHT / 2,
+            hotX = 10, hotY = LINE_HEIGHT / 2, pointGlyph = '◎', pointDx = 10, pointDy = LINE_HEIGHT / 2,
+        ),
+        /*
+         * Arrow shapes to try on the real glasses: the Even font tables published so far do not
+         * list them, but they are also incomplete (╋ is missing there and still shows). A missing
+         * glyph shows up as an empty box or nothing. Width (20 px like the other symbols) and the
+         * tip position are assumptions until seen on hardware.
+         */
+        ARROW(
+            "Pfeil ↖",
+            listOf(BlockLine(0, "↖")),
+            hotX = 4, hotY = 8, pointGlyph = '↖', pointDx = 4, pointDy = 8,
+        ),
+        ARROW_HEAVY(
+            "Pfeil ⬉",
+            listOf(BlockLine(0, "⬉")),
+            hotX = 4, hotY = 8, pointGlyph = '⬉', pointDx = 4, pointDy = 8,
+        ),
+        TRIANGLE_CORNER(
+            "Dreieck ◤",
+            listOf(BlockLine(0, "◤")),
+            hotX = 3, hotY = 7, pointGlyph = '◤', pointDx = 3, pointDy = 7,
+        ),
+        TRIANGLE_UP(
+            "Dreieck ▲",
+            listOf(BlockLine(0, "▲")),
+            hotX = 10, hotY = 7, pointGlyph = '▲', pointDx = 10, pointDy = 7,
         );
 
         val lineCount: Int get() = lines.size

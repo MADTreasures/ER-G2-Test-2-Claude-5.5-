@@ -39,6 +39,11 @@ object G2Font {
         0x254B to 320, // ╋
         0x25CE to 320, // ◎
         0x2588 to 320, // █
+        // Arrow cursor candidates: width assumed like the other symbols, not yet seen on hardware.
+        0x2196 to 320, // ↖
+        0x25B2 to 320, // ▲
+        0x25E4 to 320, // ◤
+        0x2B09 to 320, // ⬉
     )
 
     /** Advance in 1/16 px, or null if the glyph is not in this table. */
